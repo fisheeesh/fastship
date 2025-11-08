@@ -1,13 +1,7 @@
-from enum import Enum
 from pydantic import BaseModel, Field
+from app.database.models import ShipmentStatus
 
-
-class ShipmentStatus(Enum):
-    placed = "placed"
-    in_transit = "in_transit"
-    out_for_delivery = "out_for_delivery"
-    delivered = "delivered"
-
+# * Pydantic model for schemas
 
 class BaseShipment(BaseModel):
     content: str = Field(description="Content of the shipment", max_length=30)
