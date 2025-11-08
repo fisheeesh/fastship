@@ -1,7 +1,9 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
 from app.database.models import ShipmentStatus
 
 # * Pydantic model for schemas
+
 
 class BaseShipment(BaseModel):
     content: str = Field(description="Content of the shipment", max_length=30)
@@ -15,6 +17,7 @@ class BaseShipment(BaseModel):
 
 class ShipmentRead(BaseShipment):
     status: ShipmentStatus
+    estimated_delivery: datetime
 
 
 class ShipmentCreate(BaseShipment):
@@ -22,4 +25,5 @@ class ShipmentCreate(BaseShipment):
 
 
 class ShipmentUpdate(BaseModel):
-    status: ShipmentStatus
+    status: ShipmentStatus | None = Field(default=None)
+    estimated_delivery: datetime | None = Field(default=None)
