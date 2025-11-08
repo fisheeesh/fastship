@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from app.database.models import ShipmentStatus
 
 # * Pydantic model for schemas
+# * Use it for data validation in the request body and response data
 
 
 class BaseShipment(BaseModel):

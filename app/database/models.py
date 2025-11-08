@@ -3,6 +3,7 @@ from enum import Enum
 from sqlmodel import SQLModel, Field
 
 # * SQL modal to represent database tables
+# * We created SQL model to define data in the tables
 # * Use these models to get data or send data to the database as well
 
 
