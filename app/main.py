@@ -14,13 +14,22 @@ from .database.session import create_db_tables
 
 @asynccontextmanager
 async def lifespan_handler(app: FastAPI):
-    create_db_tables()
+    await create_db_tables()
     yield
 
 
-app = FastAPI(lifespan=lifespan_handler)
+app = FastAPI(
+    # Server start/stop listener
+    lifespan=lifespan_handler,
+)
 
 app.include_router(router)
+
+
+@app.get("/", include_in_schema=False)
+def start_server():
+    return {"detail": "Server is running..."}
+
 
 @app.get("/scalar", include_in_schema=False)
 def get_scalar_docs():
