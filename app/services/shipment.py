@@ -11,6 +11,7 @@ from fastapi import HTTPException, status
 # ! cannot (session: SessionDep) cus fastAPI only looks for dependencies inside of the endpoints not anywhere else
 class ShipmentService:
     def __init__(self, session: AsyncSession):
+        # * Get database session to perform database operations
         self.session = session
 
     async def get(self, id: int) -> Shipment:

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
 
-from app.api.router import router
+from app.api.router import master_router
 
 from .database.session import create_db_tables
 
@@ -23,7 +23,7 @@ app = FastAPI(
     lifespan=lifespan_handler,
 )
 
-app.include_router(router)
+app.include_router(master_router)
 
 
 @app.get("/", include_in_schema=False)

@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from sqlmodel import SQLModel, Field
+from pydantic import EmailStr
 
 # * SQL modal to represent database tables
 # * We created SQL model to define data in the tables
@@ -23,3 +24,13 @@ class Shipment(SQLModel, table=True):
     destination: int
     status: ShipmentStatus
     estimated_delivery: datetime
+
+
+class Seller(SQLModel, table=True):
+    __tablename__ = "seller"
+
+    id: int = Field(default=None, primary_key=True)
+    name: str
+
+    email: EmailStr
+    password_hash: str
