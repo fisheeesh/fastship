@@ -15,6 +15,9 @@ class DatabaseSettings(BaseSettings):
     POSTGRES_PASSWORD: Optional[str] = None
     POSTGRES_DB: Optional[str] = None
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+
     model_config = _base_config
 
     @property
@@ -23,11 +26,11 @@ class DatabaseSettings(BaseSettings):
 
 
 class SecritySettings(BaseSettings):
-    JWT_SECRET: Optional[str] = None
-    JWT_ALGORITHM: Optional[str] = None
+    JWT_SECRET: str
+    JWT_ALGORITHM: str
 
     model_config = _base_config
 
 
-db_settings = DatabaseSettings()
-security_settings = SecritySettings()
+db_settings = DatabaseSettings()  # type: ignore
+security_settings = SecritySettings() # type: ignore
