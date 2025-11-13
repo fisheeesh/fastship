@@ -1,6 +1,7 @@
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel, Field
-from app.database.models import ShipmentStatus
+from app.database.models import Seller, ShipmentStatus
 
 # * Pydantic model for schemas
 # * Use it for data validation in the request body and response data
@@ -17,8 +18,10 @@ class BaseShipment(BaseModel):
 
 
 class ShipmentRead(BaseShipment):
+    id: UUID
     status: ShipmentStatus
     estimated_delivery: datetime
+    seller: Seller
 
 
 class ShipmentCreate(BaseShipment):
