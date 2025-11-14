@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.dependencies import SellerDep, ShipmentServiceDep
+from app.api.dependencies import DeliveryPartnerDep, SellerDep, ShipmentServiceDep
 from app.api.schemas.shipment import (
     ShipmentCreate,
     ShipmentRead,
@@ -41,7 +41,8 @@ async def submit_shipment(
 @router.patch("/", response_model=ShipmentRead)
 async def update_shipment(
     id: UUID,
-    seller: SellerDep,
+    # * Only logged in delivery partner can update shipment's status
+    _: DeliveryPartnerDep,
     shipment_update: ShipmentUpdate,
     service: ShipmentServiceDep,
 ):
@@ -60,7 +61,7 @@ async def update_shipment(
 @router.delete("/")
 async def delete_shipment(
     id: UUID,
-    seller: SellerDep,
+    _: SellerDep,
     service: ShipmentServiceDep,
 ):
     await service.delete(id)

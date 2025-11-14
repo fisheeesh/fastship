@@ -6,6 +6,8 @@ Create Date: ${create_date}
 
 """
 from typing import Sequence, Union
+import sqlmodel
+
 
 from alembic import op
 import sqlalchemy as sa
