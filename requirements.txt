@@ -1,0 +1,2 @@
+fastapi[all]==0.128.8
+scalar_fastapi==1.8.2
