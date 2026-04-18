@@ -1,0 +1,27 @@
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Or simply:
+**/*.pyc
+**/*.pyo
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# Environment variables
+.env
+
+# mypy
+.mypy_cache/
+
+# macOS files
+.DS_Store
+
+guide.txt
+
+.vscode
