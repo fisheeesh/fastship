@@ -4,7 +4,13 @@ from typing import Dict
 from database.models import Shipment
 from database.session import SessionDep
 from fastapi import APIRouter, HTTPException, status
-from api.schemas.shipment import ShipmentCreate, ShipmentRead, ShipmentStatus, ShipmentUpdate
+from api.schemas.shipment import (
+    ShipmentCreate,
+    ShipmentRead,
+    ShipmentStatus,
+    ShipmentUpdate,
+)
+from services.shipment import ShipmentService
 
 router = APIRouter()
 
@@ -12,7 +18,7 @@ router = APIRouter()
 ### Read a shipment by id
 @router.get("/shipment/{id}", response_model=ShipmentRead)
 async def get_shipment(id: int, session: SessionDep):
-    shipment = await session.get(Shipment, id)
+    shipment = await ShipmentService(session).get(id)
 
     if shipment is None:
         raise HTTPException(
