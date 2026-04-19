@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from typing import Optional
 from pydantic import BaseModel, Field
 from app.database.models import ShipmentStatus
 
@@ -10,6 +13,7 @@ class BaseShipment(BaseModel):
 
 class ShipmentRead(BaseShipment):
     status: ShipmentStatus
+    estimated_delivery: datetime
 
 
 class ShipmentCreate(BaseShipment):
@@ -17,4 +21,5 @@ class ShipmentCreate(BaseShipment):
 
 
 class ShipmentUpdate(BaseModel):
-    status: ShipmentStatus
+    status: Optional[ShipmentStatus] = Field(default=None)
+    estimated_delivery: Optional[datetime] = Field(default=None)
