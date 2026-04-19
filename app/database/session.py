@@ -14,7 +14,7 @@ engine = create_async_engine(
 )
 
 
-async def created_db_tables():
+async def create_db_tables():
     async with engine.begin() as connection:
         from .models import Shipment  # noqa: F401
 
