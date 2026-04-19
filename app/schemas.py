@@ -1,17 +1,20 @@
 from pydantic import BaseModel, Field
-from typing import Union
-from random import randint
+from app.database.models import ShipmentStatus
 
 
-def random_destination():
-    return randint(11000, 11999)
-
-
-class Shipment(BaseModel):
+class BaseShipment(BaseModel):
     content: str = Field(max_length=30)
-    weight: float = Field(
-        description="Weight of hte shipment in kilograms (kg)",
-        le=25,
-        ge=1,
-    )
-    destination: Union[int, None] = Field(default_factory=random_destination)
+    weight: float = Field(le=25, ge=1)
+    destination: int
+
+
+class ShipmentRead(BaseShipment):
+    status: ShipmentStatus
+
+
+class ShipmentCreate(BaseShipment):
+    pass
+
+
+class ShipmentUpdate(BaseModel):
+    status: ShipmentStatus

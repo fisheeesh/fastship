@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
-from .schemas import Shipment
+from .schemas import ShipmentRead, ShipmentCreate, ShipmentUpdate
 
 app = FastAPI()
 
@@ -17,18 +17,19 @@ def get_latest_shipment():
     }
 
 
-@app.get("/shipment")
-def get_shipment(id: int) -> Dict[str, Any]:
+@app.get("/shipment", response_model=ShipmentRead)
+def get_shipment(id: int):
     return {
         "id": id,
-        "weight": 1.24,
-        "content": "wooden talbe",
-        "status": "in transit",
+        "content": "hello",
+        "weight": 1.23,
+        # "destination": 11020,
+        "status": "placed",
     }
 
 
 @app.post("/shipment")
-def create_shipment(body: Shipment) -> Dict[str, Any]:
+def create_shipment(body: ShipmentCreate) -> Dict[str, Any]:
     return {
         "content": body.content,
         "weight": body.weight,
@@ -36,14 +37,17 @@ def create_shipment(body: Shipment) -> Dict[str, Any]:
     }
 
 
-@app.put("/shipment")
-def update_shipment():
-    pass
+@app.patch("/shipment", response_model=ShipmentRead)
+def update_shipment(id: int, body: ShipmentUpdate):
+    return {
+        "id": id,
+        "status": body,
+    }
 
 
 @app.delete("/shipment")
-def delete_shipment():
-    pass
+def delete_shipment(id: int) -> Dict[str, int]:
+    return {"id": id}
 
 
 @app.get("/scalar", include_in_schema=False)
