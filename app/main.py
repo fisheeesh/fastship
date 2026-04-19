@@ -13,7 +13,7 @@ from .schemas import ShipmentCreate, ShipmentRead, ShipmentUpdate
 
 @asynccontextmanager
 async def lifespan_handler(app: FastAPI):
-    create_db_tables()
+    await create_db_tables()
     yield
 
 
@@ -22,8 +22,8 @@ app = FastAPI(lifespan=lifespan_handler)
 
 ### Read a shipment by id
 @app.get("/shipment/{id}", response_model=ShipmentRead)
-def get_shipment(id: int, session: SessionDep):
-    shipment = session.get(Shipment, id)
+async def get_shipment(id: int, session: SessionDep):
+    shipment = await session.get(Shipment, id)
 
     if shipment is None:
         raise HTTPException(
@@ -35,7 +35,9 @@ def get_shipment(id: int, session: SessionDep):
 
 ### Create new shipment
 @app.post("/shipment", response_model=None)
-def create_shipment(shipment: ShipmentCreate, session: SessionDep) -> Dict[str, int]:
+async def create_shipment(
+    shipment: ShipmentCreate, session: SessionDep
+) -> Dict[str, int]:
     new_shipment = Shipment(
         **shipment.model_dump(),
         status=ShipmentStatus.placed,
@@ -43,15 +45,15 @@ def create_shipment(shipment: ShipmentCreate, session: SessionDep) -> Dict[str, 
     )
 
     session.add(new_shipment)
-    session.commit()
-    session.refresh(new_shipment)
+    await session.commit()
+    await session.refresh(new_shipment)
 
     return {"id": new_shipment.id}
 
 
 ### Update a shipment by id
 @app.patch("/shipment", response_model=ShipmentRead)
-def update_shipment(id: int, shipment_update: ShipmentUpdate, session: SessionDep):
+async def update_shipment(id: int, shipment_update: ShipmentUpdate, session: SessionDep):
     update = shipment_update.model_dump(exclude_none=True)
 
     if not update:
@@ -60,7 +62,7 @@ def update_shipment(id: int, shipment_update: ShipmentUpdate, session: SessionDe
             detail="No data provided to update.",
         )
 
-    shipment = session.get(Shipment, id)
+    shipment = await session.get(Shipment, id)
     if shipment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Given id doesn't exist."
@@ -68,24 +70,24 @@ def update_shipment(id: int, shipment_update: ShipmentUpdate, session: SessionDe
 
     shipment.sqlmodel_update(update)
     session.add(shipment)
-    session.commit()
-    session.refresh(shipment)
+    await session.commit()
+    await session.refresh(shipment)
 
     return shipment
 
 
 ### Delte a shipment by id
 @app.delete("/shipment", response_model=None)
-def delete_shipment(id: int, session: SessionDep):
-    shipment = session.get(Shipment, id)
+async def delete_shipment(id: int, session: SessionDep):
+    shipment = await session.get(Shipment, id)
     if shipment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Given id doesn't exist.",
         )
 
-    session.delete(shipment)
-    session.commit()
+    await session.delete(shipment)
+    await session.commit()
 
     return {"message": "Deleted successfully!"}
 
