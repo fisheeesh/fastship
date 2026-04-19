@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
 
-from app.api.router import router
+from .api.router import router
 
 from .database.session import create_db_tables
 

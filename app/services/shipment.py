@@ -1,12 +1,14 @@
-from api.schemas.shipment import ShipmentCreate, ShipmentUpdate
-from database.models import Shipment, ShipmentStatus
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
+
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
+
+from ..api.schemas.shipment import ShipmentCreate, ShipmentUpdate
+from ..database.models import Shipment, ShipmentStatus
 
 
 class ShipmentService:
-    def __int__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
     async def get(self, id: int) -> Shipment:
