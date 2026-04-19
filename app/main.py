@@ -1,35 +1,43 @@
+from contextlib import asynccontextmanager
 from typing import Any, Dict
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
-from .schemas import ShipmentRead, ShipmentCreate, ShipmentUpdate
+from sqlmodel import Session
 
-app = FastAPI()
+from app.database.session import create_db_tables, get_session
+from database.models import Shipment
 
-
-@app.get("/shipment/latest")
-def get_latest_shipment():
-    return {
-        "id": "2132432",
-        "weight": 1.24,
-        "content": "glassware",
-        "status": "out for delivery",
-    }
+from .schemas import ShipmentCreate, ShipmentRead, ShipmentUpdate
 
 
+@asynccontextmanager
+async def lifespan_handler(app: FastAPI):
+    create_db_tables()
+    yield
+
+
+app = FastAPI(lifespan=lifespan_handler)
+
+
+### Read a shipment by id
 @app.get("/shipment", response_model=ShipmentRead)
-def get_shipment(id: int):
-    return {
-        "id": id,
-        "content": "hello",
-        "weight": 1.23,
-        # "destination": 11020,
-        "status": "placed",
-    }
+def get_shipment(id: int, session: Session = Depends(get_session)):
+    shipment = session.get(Shipment, id)
+
+    if shipment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Given id doesn't exist!"
+        )
+
+    return shipment
 
 
-@app.post("/shipment")
-def create_shipment(body: ShipmentCreate) -> Dict[str, Any]:
+### Create new shipment
+@app.post("/shipment", response_model=None)
+def create_shipment(
+    body: ShipmentCreate, session: Session = Depends(get_session)
+) -> Dict[str, Any]:
     return {
         "content": body.content,
         "weight": body.weight,
