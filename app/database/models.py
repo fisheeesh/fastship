@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field
 from enum import Enum
 from datetime import datetime
+from pydantic import EmailStr
 
 
 class ShipmentStatus(str, Enum):
@@ -19,3 +20,12 @@ class Shipment(SQLModel, table=True):
     destination: int
     status: ShipmentStatus
     estimated_delivery: datetime
+
+
+class Seller(SQLModel, table=True):
+    __tablename__ = "seller"  # type: ignore
+
+    id: int = Field(primary_key=True, default=None)
+    name: str
+    email: EmailStr
+    password_hash: str
