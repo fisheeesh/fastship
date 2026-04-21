@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from ...database.models import Shipment
-from ..dependencies import ShipmentServiceDep
+from ..dependencies import CurrentSellerDep, ShipmentServiceDep
 from ..schemas.shipment import (
     ShipmentCreate,
     ShipmentUpdate,
@@ -25,6 +25,7 @@ async def get_shipment(
 ### Create new shipment
 @router.post("/", response_model=Shipment)
 async def create_shipment(
+    current_seller: CurrentSellerDep,
     shipment_create: ShipmentCreate,
     service: ShipmentServiceDep,
 ):
