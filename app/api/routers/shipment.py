@@ -15,6 +15,7 @@ router = APIRouter(prefix="/shipment", tags=["Shipment"])
 @router.get("/{id}", response_model=Shipment)
 async def get_shipment(
     id: int,
+    _: CurrentSellerDep,
     service: ShipmentServiceDep,
 ):
     shipment = await service.get(id)
