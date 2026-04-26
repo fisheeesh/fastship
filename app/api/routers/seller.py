@@ -3,6 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from ...database.redis import add_jti_to_blacklist
+
 from ...utils import decode_acces_token
 
 from ..dependencies import SellerServiceDep, SessionDep, verify_access_token
@@ -38,7 +40,11 @@ async def login_seller(
 async def logout_seller(
     token_data: Annotated[dict, Depends(verify_access_token)],
 ):
-    token_data["jti"]
+    await add_jti_to_blacklist(token_data["jti"])
+    
+    return {
+        "details": "Successfully logged out. See you again!"
+    }
 
 
 @router.get("/auth-check", response_model=SellerRead)

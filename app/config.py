@@ -9,11 +9,16 @@ _base_config = SettingsConfigDict(
 
 
 class DatabaseSettings(BaseSettings):
+    # * Postgresql
     POSTGRES_SERVER: str
     POSTGRES_PORT: int
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+
+    # * Redis
+    REDIS_HOST: str
+    REDIS_PORT: int
 
     model_config = _base_config
 
