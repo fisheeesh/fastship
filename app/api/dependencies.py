@@ -14,6 +14,8 @@ from ..database.session import get_session
 from ..services.shipment import ShipmentService
 from ..core.security import oauth2_scheme
 
+# $ Annotated -> [type, bl ka ya ll]
+
 # * Asyn database session dep annotation
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
