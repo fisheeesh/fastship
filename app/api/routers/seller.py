@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from ...utils import decode_acces_token
 
-from ..dependencies import SellerServiceDep, SessionDep
+from ..dependencies import SellerServiceDep, SessionDep, verify_access_token
 from ..schemas.seller import SellerCreate, SellerRead
 from ...database.models import Seller
 from ...core.security import oauth2_scheme
@@ -31,6 +31,14 @@ async def login_seller(
         "access_token": token,
         "type": "jwt",
     }
+
+
+### Logout the seller
+@router.get("/logout")
+async def logout_seller(
+    token_data: Annotated[dict, Depends(verify_access_token)],
+):
+    token_data["jti"]
 
 
 @router.get("/auth-check", response_model=SellerRead)
