@@ -1,9 +1,12 @@
+from uuid import UUID
+
 from fastapi import APIRouter
 
 from ...database.models import Shipment
 from ..dependencies import CurrentSellerDep, ShipmentServiceDep
 from ..schemas.shipment import (
     ShipmentCreate,
+    ShipmentRead,
     ShipmentUpdate,
 )
 
@@ -12,9 +15,9 @@ router = APIRouter(prefix="/shipment", tags=["Shipment"])
 
 # ! FastAPI only looks for dependencies inside of the endpoints, not anywhere else
 ### Read a shipment by id
-@router.get("/{id}", response_model=Shipment)
+@router.get("/{id}", response_model=ShipmentRead)
 async def get_shipment(
-    id: int,
+    id: UUID,
     _: CurrentSellerDep,
     service: ShipmentServiceDep,
 ):
@@ -26,11 +29,11 @@ async def get_shipment(
 ### Create new shipment
 @router.post("/", response_model=Shipment)
 async def create_shipment(
-    _: CurrentSellerDep,
+    seller: CurrentSellerDep,
     shipment_create: ShipmentCreate,
     service: ShipmentServiceDep,
 ):
-    shipment = await service.add(shipment_create)
+    shipment = await service.add(shipment_create, seller)
 
     return shipment
 
@@ -38,7 +41,7 @@ async def create_shipment(
 ### Update a shipment by id
 @router.patch("/", response_model=Shipment)
 async def update_shipment(
-    id: int,
+    id: UUID,
     _: CurrentSellerDep,
     shipment_update: ShipmentUpdate,
     service: ShipmentServiceDep,
@@ -51,7 +54,7 @@ async def update_shipment(
 ### Delete a shipment by id
 @router.delete("/", response_model=None)
 async def delete_shipment(
-    id: int,
+    id: UUID,
     _: CurrentSellerDep,
     service: ShipmentServiceDep,
 ):
