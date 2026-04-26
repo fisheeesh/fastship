@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -13,6 +14,7 @@ class BaseShipment(BaseModel):
 
 
 class ShipmentRead(BaseShipment):
+    id: UUID
     status: ShipmentStatus
     estimated_delivery: datetime
 

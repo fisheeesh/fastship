@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,7 +46,7 @@ async def get_current_seller(
             detail="Invalid or access token payload.",
         )
 
-    seller = await session.get(Seller, user["id"])
+    seller = await session.get(Seller, UUID(user["id"]))
     if seller is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
