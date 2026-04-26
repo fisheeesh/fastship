@@ -26,7 +26,7 @@ async def get_shipment(
 ### Create new shipment
 @router.post("/", response_model=Shipment)
 async def create_shipment(
-    current_seller: CurrentSellerDep,
+    _: CurrentSellerDep,
     shipment_create: ShipmentCreate,
     service: ShipmentServiceDep,
 ):
@@ -39,6 +39,7 @@ async def create_shipment(
 @router.patch("/", response_model=Shipment)
 async def update_shipment(
     id: int,
+    _: CurrentSellerDep,
     shipment_update: ShipmentUpdate,
     service: ShipmentServiceDep,
 ):
@@ -49,7 +50,11 @@ async def update_shipment(
 
 ### Delete a shipment by id
 @router.delete("/", response_model=None)
-async def delete_shipment(id: int, service: ShipmentServiceDep):
+async def delete_shipment(
+    id: int,
+    _: CurrentSellerDep,
+    service: ShipmentServiceDep,
+):
     await service.delete(id)
 
     return {"message": "Deleted successfully!"}

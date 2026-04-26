@@ -1,5 +1,8 @@
+from typing import Union
+
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
+from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
@@ -16,12 +19,17 @@ class SellerService:
         # * Get database session to perform database operations
         self.session = session
 
-    async def add(self, credentials: SellerCreate) -> Seller:
+    async def get(self, email: EmailStr) -> Union[Seller, None]:
         result = await self.session.execute(
-            select(Seller).where(col(Seller.email) == credentials.email),
+            select(Seller).where(col(Seller.email) == email),
         )
 
-        existing_seller = result.scalar()
+        seller = result.scalar()
+
+        return seller
+
+    async def add(self, credentials: SellerCreate) -> Seller:
+        existing_seller = await self.get(credentials.email)
 
         if existing_seller:
             raise HTTPException(
@@ -41,11 +49,7 @@ class SellerService:
 
     async def login(self, email: str, password: str) -> str:
         # * Get seller from db with provided email
-        result = await self.session.execute(
-            select(Seller).where(col(Seller.email) == email),
-        )
-
-        seller = result.scalar()
+        seller = await self.get(email)
 
         # * Check if seller is existed or not
         if seller is None:

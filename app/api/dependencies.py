@@ -16,14 +16,14 @@ from ..core.security import oauth2_scheme
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-# * Access token data dep
-def get_access_token(token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
+# * Verify access token dep
+def verify_access_token(token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
     data = decode_acces_token(token)
 
     if data is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired access token",
+            detail="Invalid or expired access token.",
         )
 
     return data
@@ -31,14 +31,14 @@ def get_access_token(token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
 
 # * Current Seller
 async def get_current_seller(
-    token_data: Annotated[dict, Depends(get_access_token)],
+    token_data: Annotated[dict, Depends(verify_access_token)],
     session: SessionDep,
 ):
     user = token_data.get("user")
     if not isinstance(user, dict) or "id" not in user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or access token payload",
+            detail="Invalid or access token payload.",
         )
 
     seller = await session.get(Seller, user["id"])
