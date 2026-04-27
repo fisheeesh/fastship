@@ -4,16 +4,18 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
+from services.base import BaseService
+
 from ..api.schemas.shipment import ShipmentCreate, ShipmentUpdate
 from ..database.models import Seller, Shipment, ShipmentStatus
 
 
-class ShipmentService:
+class ShipmentService(BaseService):
     def __init__(self, session: AsyncSession):
-        self.session = session
+        super().__init__(Shipment, session)  # type: ignore
 
     async def get(self, id: UUID) -> Shipment:
-        shipment = await self.session.get(Shipment, id)
+        shipment = await self._get(id)
 
         if shipment is None:
             raise HTTPException(
@@ -32,11 +34,7 @@ class ShipmentService:
             # seller=Seller,
         )
 
-        self.session.add(new_shipment)
-        await self.session.commit()
-        await self.session.refresh(new_shipment)
-
-        return new_shipment
+        return await self._add(new_shipment)  # type: ignore
 
     async def update(self, id: UUID, shipment_update: ShipmentUpdate) -> Shipment:
         # ? Make sure to exclude none fields
@@ -48,16 +46,11 @@ class ShipmentService:
             )
 
         shipment = await self.get(id)
-
         shipment.sqlmodel_update(update)
-        self.session.add(shipment)
-        await self.session.commit()
-        await self.session.refresh(shipment)
 
-        return shipment
+        return await self._update(shipment)  # type: ignore
 
     async def delete(self, id: UUID) -> None:
         shipment = await self.get(id)
 
-        await self.session.delete(shipment)
-        await self.session.commit()
+        await self._delete(shipment)
