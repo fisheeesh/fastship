@@ -7,10 +7,10 @@ from ...database.redis import add_jti_to_blacklist
 
 from ...utils import decode_acces_token
 
-from ..dependencies import SellerServiceDep, SessionDep, verify_access_token
+from ..dependencies import SellerServiceDep, SessionDep, verify_seller_access_token
 from ..schemas.seller import SellerCreate, SellerRead
 from ...database.models import Seller
-from ...core.security import oauth2_scheme
+from ...core.security import oauth2_scheme_seller
 
 router = APIRouter(prefix="/seller", tags=["Seller"])
 
@@ -38,18 +38,16 @@ async def login_seller(
 ### Logout the seller
 @router.get("/logout")
 async def logout_seller(
-    token_data: Annotated[dict, Depends(verify_access_token)],
+    token_data: Annotated[dict, Depends(verify_seller_access_token)],
 ):
     await add_jti_to_blacklist(token_data["jti"])
-    
-    return {
-        "details": "Successfully logged out. See you again!"
-    }
+
+    return {"details": "Successfully logged out. See you again!"}
 
 
 @router.get("/auth-check", response_model=SellerRead)
 async def auth_check(
-    token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep
+    token: Annotated[str, Depends(oauth2_scheme_seller)], session: SessionDep
 ):
     data = decode_acces_token(token)
 
