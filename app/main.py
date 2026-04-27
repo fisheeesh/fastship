@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
-import os
 
 from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
@@ -11,10 +10,7 @@ from .database.session import create_db_tables
 
 @asynccontextmanager
 async def lifespan_handler(app: FastAPI):
-    # Optional bootstrap mode for local/dev only.
-    # Keep this OFF when using Alembic migrations.
-    if os.getenv("AUTO_CREATE_TABLES_ON_STARTUP", "0") == "1":
-        await create_db_tables()
+    await create_db_tables()
     yield
 
 

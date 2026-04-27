@@ -1,8 +1,8 @@
-"""init
+"""add delivery partner table
 
-Revision ID: 81ed9a25bc7f
+Revision ID: da5adcdf78d6
 Revises: 
-Create Date: 2026-04-27 00:02:49.790068
+Create Date: 2026-04-28 00:30:19.748710
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '81ed9a25bc7f'
+revision: str = 'da5adcdf78d6'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
