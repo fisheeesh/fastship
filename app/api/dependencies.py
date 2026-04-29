@@ -4,16 +4,14 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database.redis import is_jti_blacklisted
-
+from ..core.security import oauth2_scheme_partner, oauth2_scheme_seller
 from ..database.models import DeliveryPartner, Seller
-from ..utils import decode_acces_token
-
-from ..services.seller import SellerService
-
+from ..database.redis import is_jti_blacklisted
 from ..database.session import get_session
+from ..services.delivery_partner import DeliveryPartnerService
+from ..services.seller import SellerService
 from ..services.shipment import ShipmentService
-from ..core.security import oauth2_scheme_seller, oauth2_scheme_partner
+from ..utils import decode_acces_token
 
 # $ Annotated -> [type, bl ka ya ll]
 
@@ -38,11 +36,16 @@ async def _verify_access_token(
 
 
 ### Seller access token data
-async def verify_seller_access_token(token: Annotated[str, Depends(oauth2_scheme_seller)],):
+async def verify_seller_access_token(
+    token: Annotated[str, Depends(oauth2_scheme_seller)],
+):
     return await _verify_access_token(token)
 
+
 ### Delivery Partner access token data
-async def verify_partner_access_token(token: Annotated[str, Depends(oauth2_scheme_partner)],):
+async def verify_partner_access_token(
+    token: Annotated[str, Depends(oauth2_scheme_partner)],
+):
     return await _verify_access_token(token)
 
 
@@ -92,12 +95,17 @@ async def get_current_partner(
 
 # * Shipment service dep
 def get_shipment_service(session: SessionDep):
-    return ShipmentService(session)
+    return ShipmentService(session, DeliveryPartnerService(session))
 
 
 # * Seller service dep
 def get_seller_service(session: SessionDep):
     return SellerService(session)
+
+
+# * Delivery partner service dep
+def get_delivery_partner_service(session: SessionDep):
+    return DeliveryPartnerService(session)
 
 
 # * Current Seller Dep
@@ -112,3 +120,9 @@ ShipmentServiceDep = Annotated[ShipmentService, Depends(get_shipment_service)]
 
 # * Seller service dep annotation
 SellerServiceDep = Annotated[SellerService, Depends(get_seller_service)]
+
+# * Delivery partner service dep annotation
+PartnerServiceDep = Annotated[
+    DeliveryPartnerService,
+    Depends(get_delivery_partner_service),
+]
