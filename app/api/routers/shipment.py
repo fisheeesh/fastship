@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter
 
 from ...database.models import Shipment
-from ..dependencies import CurrentSellerDep, ShipmentServiceDep
+from ..dependencies import CurrentPartnerDep, CurrentSellerDep, ShipmentServiceDep
 from ..schemas.shipment import (
     ShipmentCreate,
     ShipmentRead,
@@ -39,10 +39,11 @@ async def create_shipment(
 
 
 ### Update a shipment by id
+# ! Only authorized delivery partner can edit shipment
 @router.patch("/", response_model=Shipment)
 async def update_shipment(
     id: UUID,
-    _: CurrentSellerDep,
+    _: CurrentPartnerDep,
     shipment_update: ShipmentUpdate,
     service: ShipmentServiceDep,
 ):

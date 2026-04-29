@@ -42,7 +42,7 @@ async def logout_seller(
 ):
     await add_jti_to_blacklist(token_data["jti"])
 
-    return {"details": "Successfully logged out. See you again!"}
+    return {"details": "Successfully logged out as seller. See you again!"}
 
 
 @router.get("/auth-check", response_model=SellerRead)

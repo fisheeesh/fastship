@@ -5,7 +5,7 @@ from sqlmodel import SQLModel
 
 
 class BaseService:
-    def __int__(self, model: SQLModel, session: AsyncSession):
+    def __init__(self, model: SQLModel, session: AsyncSession):
         self.model = model
         self.session = session
 
