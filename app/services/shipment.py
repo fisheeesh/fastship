@@ -72,6 +72,12 @@ class ShipmentService(BaseService):
         # ? on the shipment with given id
         shipment = await self.get(id)
 
+        if shipment.status == ShipmentStatus.cancelled:
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="You cannot edit to cancelled shipment.",
+            )
+
         if shipment.delivery_partner_id != partner.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -99,6 +105,12 @@ class ShipmentService(BaseService):
         # * Validate the seller
         shipment = await self.get(id)
 
+        if shipment.status == ShipmentStatus.cancelled:
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="This shipment is already cancelled.",
+            )
+
         if shipment.seller_id != seller.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -110,8 +122,9 @@ class ShipmentService(BaseService):
             status=ShipmentStatus.cancelled,
         )
         shipment.timeline.append(event)
+        shipment.estimated_delivery = None
 
-        return shipment
+        return cast(Shipment, await self._update(shipment))
 
     async def delete(self, id: UUID, seller: Seller) -> None:
         shipment = await self.get(id)

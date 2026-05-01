@@ -16,7 +16,7 @@ class BaseShipment(BaseModel):
 class ShipmentRead(BaseShipment):
     id: UUID
     timeline: list[ShipmentEvent]
-    estimated_delivery: datetime
+    estimated_delivery: datetime | None
     # seller: Seller
 
 

@@ -33,7 +33,7 @@ class Shipment(SQLModel, table=True):
     content: str
     weight: float = Field(le=25)
     destination: int
-    estimated_delivery: datetime
+    estimated_delivery: datetime | None
     created_at: datetime = Field(
         sa_column=Column(
             postgresql.TIMESTAMP,
