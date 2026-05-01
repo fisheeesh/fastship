@@ -21,9 +21,7 @@ async def get_shipment(
     _: CurrentSellerDep,
     service: ShipmentServiceDep,
 ):
-    shipment = await service.get(id)
-
-    return shipment
+    return await service.get(id)
 
 
 ### Create new shipment
@@ -33,9 +31,7 @@ async def create_shipment(
     shipment_create: ShipmentCreate,
     service: ShipmentServiceDep,
 ):
-    shipment = await service.add(shipment_create, seller)
-
-    return shipment
+    return await service.add(shipment_create, seller)
 
 
 ### Update a shipment by id
@@ -47,9 +43,7 @@ async def update_shipment(
     shipment_update: ShipmentUpdate,
     service: ShipmentServiceDep,
 ):
-    shipment = await service.update(id, shipment_update)
-
-    return shipment
+    return await service.update(id, shipment_update)
 
 
 ### Delete a shipment by id
@@ -61,4 +55,4 @@ async def delete_shipment(
 ):
     await service.delete(id)
 
-    return {"message": "Deleted successfully!"}
+    return {"message": "Deleted a shipment successfully!"}
