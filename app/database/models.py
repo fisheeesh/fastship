@@ -33,7 +33,7 @@ class Shipment(SQLModel, table=True):
     created_at: datetime = Field(
         sa_column=Column(
             postgresql.TIMESTAMP,
-            default=datetime.now(),
+            default=datetime.now,
         )
     )
 
@@ -53,6 +53,10 @@ class Shipment(SQLModel, table=True):
         sa_relationship_kwargs={"lazy": "selectin"},
     )
 
+    @property
+    def status(self):
+        return self.timeline[-1].status if len(self.timeline) > 0 else None
+
 
 class ShipmentEvent(SQLModel, table=True):
     __tablename__ = "shipment_event"  # type: ignore
@@ -61,13 +65,13 @@ class ShipmentEvent(SQLModel, table=True):
         sa_column=Column(
             postgresql.UUID,
             primary_key=True,
-            default=None,
+            default=uuid4,
         )
     )
     created_at: datetime = Field(
         sa_column=Column(
             postgresql.TIMESTAMP,
-            default=datetime.now(),
+            default=datetime.now,
         )
     )
     location: int
@@ -100,7 +104,7 @@ class Seller(User, table=True):
     created_at: datetime = Field(
         sa_column=Column(
             postgresql.TIMESTAMP,
-            default=datetime.now(),
+            default=datetime.now,
         )
     )
     address: str
@@ -127,7 +131,7 @@ class DeliveryPartner(User, table=True):
     created_at: datetime = Field(
         sa_column=Column(
             postgresql.TIMESTAMP,
-            default=datetime.now(),
+            default=datetime.now,
         )
     )
     serviceable_zip_codes: list[int] = Field(
@@ -145,7 +149,7 @@ class DeliveryPartner(User, table=True):
         return [
             shipment
             for shipment in self.shipments
-            if shipment.timeline.status != ShipmentStatus.delivered # type: ignore
+            if shipment.status != ShipmentStatus.delivered  # type: ignore
         ]
 
     @property

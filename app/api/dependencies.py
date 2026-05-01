@@ -10,6 +10,7 @@ from ..database.redis import is_jti_blacklisted
 from ..database.session import get_session
 from ..services.delivery_partner import DeliveryPartnerService
 from ..services.seller import SellerService
+from ..services.shipment_event import ShipmentEventService
 from ..services.shipment import ShipmentService
 from ..utils import decode_acces_token
 
@@ -95,7 +96,9 @@ async def get_current_partner(
 
 # * Shipment service dep
 def get_shipment_service(session: SessionDep):
-    return ShipmentService(session, DeliveryPartnerService(session))
+    return ShipmentService(
+        session, DeliveryPartnerService(session), ShipmentEventService(session)
+    )
 
 
 # * Seller service dep

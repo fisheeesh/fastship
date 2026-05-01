@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from ...database.models import Seller, ShipmentStatus
+from ...database.models import ShipmentEvent, ShipmentStatus
 
 
 class BaseShipment(BaseModel):
@@ -15,9 +15,9 @@ class BaseShipment(BaseModel):
 
 class ShipmentRead(BaseShipment):
     id: UUID
-    status: ShipmentStatus
+    timeline: list[ShipmentEvent]
     estimated_delivery: datetime
-    seller: Seller
+    # seller: Seller
 
 
 class ShipmentCreate(BaseShipment):
@@ -25,5 +25,7 @@ class ShipmentCreate(BaseShipment):
 
 
 class ShipmentUpdate(BaseModel):
+    location: Optional[int] = Field(default=None)
+    description: Optional[str] = Field(default=None)
     status: Optional[ShipmentStatus] = Field(default=None)
     estimated_delivery: Optional[datetime] = Field(default=None)

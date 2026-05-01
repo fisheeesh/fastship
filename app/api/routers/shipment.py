@@ -1,8 +1,7 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 
-from ...database.models import Shipment
 from ..dependencies import CurrentPartnerDep, CurrentSellerDep, ShipmentServiceDep
 from ..schemas.shipment import (
     ShipmentCreate,
@@ -25,7 +24,7 @@ async def get_shipment(
 
 
 ### Create new shipment
-@router.post("/", response_model=Shipment)
+@router.post("/", response_model=ShipmentRead)
 async def create_shipment(
     seller: CurrentSellerDep,
     shipment_create: ShipmentCreate,
@@ -36,14 +35,22 @@ async def create_shipment(
 
 ### Update a shipment by id
 # ! Only authorized delivery partner can edit shipment
-@router.patch("/", response_model=Shipment)
+@router.patch("/", response_model=ShipmentRead)
 async def update_shipment(
     id: UUID,
-    _: CurrentPartnerDep,
+    partner: CurrentPartnerDep,
     shipment_update: ShipmentUpdate,
     service: ShipmentServiceDep,
 ):
-    return await service.update(id, shipment_update)
+    # ? Make sure to exclude none fields
+    update = shipment_update.model_dump(exclude_none=True)
+    if not update:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No data provided to update.",
+        )
+
+    return await service.update(id, shipment_update, partner)
 
 
 ### Delete a shipment by id

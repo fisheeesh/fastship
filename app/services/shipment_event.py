@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database.models import Shipment, ShipmentEvent, ShipmentStatus
@@ -11,14 +13,14 @@ class ShipmentEventService(BaseService):
     async def add(
         self,
         shipment: Shipment,
-        location: int = None,  # type: ignore
-        status: ShipmentStatus = None,  # type: ignore
-        description: str = None,  # type: ignore
+        location: Optional[int] = None,
+        status: Optional[ShipmentStatus] = None,
+        description: Optional[str] = None,
     ) -> ShipmentEvent:
-        if not location or not status:
+        if location is None or status is None:
             last_event = await self.get_latest_event(shipment)
-            location if location else last_event.location
-            status if status else last_event.status
+            location = location if location is not None else last_event.location
+            status = status if status is not None else last_event.status
 
         new_event = ShipmentEvent(
             location=location,
