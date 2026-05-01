@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from uuid import uuid4
 
 
@@ -6,6 +7,10 @@ import jwt
 from typing import Union
 
 from .config import security_settings
+
+# ? Reference of app directory
+APP_DIR = Path(__file__).resolve().parent
+TEMPLATE_DIR = APP_DIR / "templates"
 
 
 def generate_access_token(
