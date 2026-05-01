@@ -53,13 +53,11 @@ async def update_shipment(
     return await service.update(id, shipment_update, partner)
 
 
-### Delete a shipment by id
-@router.delete("/", response_model=None)
-async def delete_shipment(
+### Cancel a shipment by id
+@router.get("/cancel", response_model=ShipmentRead)
+async def cancel_shipment(
     id: UUID,
-    _: CurrentSellerDep,
+    seller: CurrentSellerDep,
     service: ShipmentServiceDep,
 ):
-    await service.delete(id)
-
-    return {"message": "Deleted a shipment successfully!"}
+    return await service.cancel(id, seller)
