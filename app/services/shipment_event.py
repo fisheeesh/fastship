@@ -1,6 +1,10 @@
 from typing import Optional
+from uuid import UUID
 
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from .notification import NotificationService
 
 from ..database.models import Shipment, ShipmentEvent, ShipmentStatus
 from .base import BaseService
@@ -9,6 +13,7 @@ from .base import BaseService
 class ShipmentEventService(BaseService):
     def __init__(self, session: AsyncSession):
         super().__init__(ShipmentEvent, session)  # type: ignore
+        self.notification_service = NotificationService()
 
     async def add(
         self,
@@ -34,6 +39,8 @@ class ShipmentEventService(BaseService):
             shipment_id=shipment.id,
         )  # type: ignore
 
+        await self._notify(shipment, status)
+
         return await self._add(new_event)  # type: ignore
 
     async def get_latest_event(self, shipment: Shipment):
@@ -42,6 +49,11 @@ class ShipmentEventService(BaseService):
         timeline.sort(key=lambda event: event.created_at)
 
         return timeline[-1]
+
+    async def delete_by_shipment(self, shipment_id: UUID) -> None:
+        await self.session.execute(
+            delete(ShipmentEvent).where(ShipmentEvent.shipment_id == shipment_id)  # type: ignore
+        )
 
     def _generate_description(self, status: ShipmentStatus, location: int):
         match status:
@@ -55,3 +67,18 @@ class ShipmentEventService(BaseService):
                 return "cancelled by the seller"
             case _:  # * and ShipmentStatus.in_transit
                 return f"scanned at {location}"
+
+    async def _notify(self, shipment: Shipment, status: ShipmentStatus):
+        match status:
+            case ShipmentStatus.placed:
+                await self.notification_service.send_email(
+                    recipients=[shipment.client_contact_email],
+                    subject="Your Order is Shipped",
+                    body=f"Your order with {shipment.seller.name} is picked up by {shipment.delivery_partner.name} and is on its way to you.",
+                )
+            case ShipmentStatus.out_for_delivery:
+                await self.notification_service.send_email(
+                    recipients=[shipment.client_contact_email],
+                    subject="Your Order is Arriving",
+                    body="Our delivery executive is on their way to deliver your order. Please ensure you are available to recieve the same.",
+                )

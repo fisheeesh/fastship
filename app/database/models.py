@@ -4,7 +4,7 @@ from typing import Union
 from uuid import UUID, uuid4
 
 from pydantic import EmailStr
-from sqlalchemy import ARRAY, INTEGER, Column
+from sqlalchemy import ARRAY, INTEGER, Column, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -27,6 +27,9 @@ class Shipment(SQLModel, table=True):
             primary_key=True,
         )
     )
+    client_contact_email: EmailStr
+    client_contact_phone: int | None
+
     content: str
     weight: float = Field(le=25)
     destination: int
@@ -51,7 +54,10 @@ class Shipment(SQLModel, table=True):
     )
     timeline: list["ShipmentEvent"] = Relationship(
         back_populates="shipments",
-        sa_relationship_kwargs={"lazy": "selectin"},
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "cascade": "all, delete-orphan",
+        },
     )
 
     @property
@@ -79,7 +85,13 @@ class ShipmentEvent(SQLModel, table=True):
     status: ShipmentStatus
     description: Union[str, None] = Field(default=None)
 
-    shipment_id: UUID = Field(foreign_key="shipment.id")
+    shipment_id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            ForeignKey("shipment.id", ondelete="CASCADE"),
+            nullable=False,
+        )
+    )
     shipments: "Shipment" = Relationship(
         back_populates="timeline",
         sa_relationship_kwargs={"lazy": "selectin"},
@@ -151,7 +163,7 @@ class DeliveryPartner(User, table=True):
             shipment
             for shipment in self.shipments
             if shipment.status != ShipmentStatus.delivered
-            or shipment.status != ShipmentStatus.cancelled
+            and shipment.status != ShipmentStatus.cancelled
         ]
 
     @property

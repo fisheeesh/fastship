@@ -74,7 +74,7 @@ class ShipmentService(BaseService):
 
         if shipment.delivery_partner_id != partner.id:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not authorized.",
             )
 
@@ -101,7 +101,7 @@ class ShipmentService(BaseService):
 
         if shipment.seller_id != seller.id:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not authorized.",
             )
 
@@ -113,7 +113,18 @@ class ShipmentService(BaseService):
 
         return shipment
 
-    async def delete(self, id: UUID) -> None:
+    async def delete(self, id: UUID, seller: Seller) -> None:
         shipment = await self.get(id)
 
-        await self._delete(shipment)
+        if shipment.seller_id != seller.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized.",
+            )
+
+        try:
+            await self.event_service.delete_by_shipment(shipment.id)
+            await self._delete(shipment)
+        except Exception:
+            await self.session.rollback()
+            raise

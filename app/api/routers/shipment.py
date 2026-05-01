@@ -2,7 +2,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 
-from ..dependencies import CurrentPartnerDep, CurrentSellerDep, ShipmentServiceDep
+from ..dependencies import (
+    CurrentPartnerDep,
+    CurrentSellerDep,
+    ShipmentServiceDep,
+)
 from ..schemas.shipment import (
     ShipmentCreate,
     ShipmentRead,
@@ -13,6 +17,28 @@ router = APIRouter(prefix="/shipment", tags=["Shipment"])
 
 
 # ! FastAPI only looks for dependencies inside of the endpoints, not anywhere else
+### Cancel a shipment by id
+@router.get("/cancel", response_model=ShipmentRead)
+async def cancel_shipment(
+    id: UUID,
+    seller: CurrentSellerDep,
+    service: ShipmentServiceDep,
+):
+    return await service.cancel(id, seller)
+
+
+### Delete a shipment by id
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_shipment(
+    id: UUID,
+    seller: CurrentSellerDep,
+    service: ShipmentServiceDep,
+):
+    await service.delete(id, seller)
+
+    return {"message": f"Deleted shipment with {id} successfully!"}
+
+
 ### Read a shipment by id
 @router.get("/{id}", response_model=ShipmentRead)
 async def get_shipment(
@@ -51,13 +77,3 @@ async def update_shipment(
         )
 
     return await service.update(id, shipment_update, partner)
-
-
-### Cancel a shipment by id
-@router.get("/cancel", response_model=ShipmentRead)
-async def cancel_shipment(
-    id: UUID,
-    seller: CurrentSellerDep,
-    service: ShipmentServiceDep,
-):
-    return await service.cancel(id, seller)
