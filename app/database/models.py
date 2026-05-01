@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Union
 from uuid import UUID, uuid4
 
 from pydantic import EmailStr
@@ -28,7 +29,6 @@ class Shipment(SQLModel, table=True):
     content: str
     weight: float = Field(le=25)
     destination: int
-    status: ShipmentStatus
     estimated_delivery: datetime
     created_at: datetime = Field(
         sa_column=Column(
@@ -46,6 +46,37 @@ class Shipment(SQLModel, table=True):
     delivery_partner_id: UUID = Field(foreign_key="delivery_partner.id")
     delivery_partner: "DeliveryPartner" = Relationship(
         back_populates="shipments",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    timeline: list["ShipmentEvent"] = Relationship(
+        back_populates="shipments",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+
+
+class ShipmentEvent(SQLModel, table=True):
+    __tablename__ = "shipment_event"  # type: ignore
+
+    id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            primary_key=True,
+            default=None,
+        )
+    )
+    created_at: datetime = Field(
+        sa_column=Column(
+            postgresql.TIMESTAMP,
+            default=datetime.now(),
+        )
+    )
+    location: int
+    status: ShipmentStatus
+    description: Union[str, None] = Field(default=None)
+
+    shipment_id: UUID = Field(foreign_key="shipment.id")
+    shipments: "Shipment" = Relationship(
+        back_populates="timeline",
         sa_relationship_kwargs={"lazy": "selectin"},
     )
 
@@ -72,7 +103,8 @@ class Seller(User, table=True):
             default=datetime.now(),
         )
     )
-
+    address: str
+    zip_code: int
     shipments: list[Shipment] = Relationship(
         back_populates="seller",
         # ? This will ensure when we access the shipments on the seller field,
@@ -113,7 +145,7 @@ class DeliveryPartner(User, table=True):
         return [
             shipment
             for shipment in self.shipments
-            if shipment.status != ShipmentStatus.delivered
+            if shipment.timeline.status != ShipmentStatus.delivered # type: ignore
         ]
 
     @property

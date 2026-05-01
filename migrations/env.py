@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from sqlmodel import SQLModel
 
-from app.database.models import Shipment, Seller, DeliveryPartner  # noqa: F401
+from app.database.models import Shipment, Seller, DeliveryPartner, ShipmentEvent  # noqa: F401
 from app.config import db_settings
 
 # this is the Alembic Config object, which provides
