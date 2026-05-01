@@ -11,9 +11,9 @@ from .base import BaseService
 
 
 class ShipmentEventService(BaseService):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, tasks):
         super().__init__(ShipmentEvent, session)  # type: ignore
-        self.notification_service = NotificationService()
+        self.notification_service = NotificationService(tasks)
 
     async def add(
         self,

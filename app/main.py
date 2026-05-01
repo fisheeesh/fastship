@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI
 from scalar_fastapi import get_scalar_api_reference
+
+from .services.notification import NotificationService
 
 from .api.router import master_router
 from .database.session import create_db_tables
@@ -20,6 +22,16 @@ app = FastAPI(
 )
 
 app.include_router(master_router)
+
+
+@app.get("/mail")
+async def send_test_mail(tasks: BackgroundTasks):
+    await NotificationService(tasks).send_email(
+        recipients=["koswam779@gmail.com"],
+        subject="Test Mail Coming Through Once.",
+        body="You shouldn't be interested in every body...",
+    )
+    return {"detail": "Mail has been sent!"}
 
 
 @app.get("/", include_in_schema=False)
