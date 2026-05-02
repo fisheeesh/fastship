@@ -168,5 +168,5 @@ class DeliveryPartner(User, table=True):
         ]
 
     @property
-    def current_handling_capacity(self):
+    def free_handling_capacity(self):
         return self.max_handling_capacity - len(self.active_shipments)
