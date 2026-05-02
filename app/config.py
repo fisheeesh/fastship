@@ -8,6 +8,13 @@ _base_config = SettingsConfigDict(
 )
 
 
+class AppSettings(BaseSettings):
+    APP_NAME: str = "FastShip"
+    APP_DOMAIN: str = "localhoust:8000"
+
+    model_config = _base_config
+
+
 class DatabaseSettings(BaseSettings):
     # * Postgresql
     POSTGRES_SERVER: str
@@ -49,6 +56,7 @@ class NotificationSettings(BaseSettings):
     model_config = _base_config
 
 
+app_settings = AppSettings()
 db_settings = DatabaseSettings()  # type: ignore
 security_settings = SecuritySettings()  # type: ignore
 notification_settings = NotificationSettings()  # type: ignore
