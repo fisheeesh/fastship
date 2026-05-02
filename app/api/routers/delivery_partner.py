@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import EmailStr
 
 from ...database.redis import add_jti_to_blacklist
 from ..dependencies import (
@@ -78,3 +79,14 @@ async def logout_delivery_partner(
 ):
     await add_jti_to_blacklist(token_data["jti"])
     return {"detail": "Successfully logged out as delivery partner. See you again!"}
+
+
+### Forgot password link
+@router.get("/forgot-password")
+async def forgot_password(
+    email: EmailStr,
+    service: PartnerServiceDep,
+):
+    await service.send_password_reset_link(email, router.prefix)
+
+    return {"detail": "Check email for password reset link."}

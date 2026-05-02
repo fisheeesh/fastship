@@ -3,13 +3,18 @@ from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, status
 from passlib.context import CryptContext
+from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .notification import NotificationService
 
 from ..database.models import User
-from ..utils import decode_url_safe_token, generate_access_token, generate_url_safe_tokn
+from ..utils import (
+    decode_url_safe_token,
+    generate_access_token,
+    generate_url_safe_token,
+)
 from .base import BaseService
 from app.config import app_settings
 
@@ -39,7 +44,7 @@ class UserService(BaseService):
         user = await self._get(UUID(token_data["id"]))
         user.email_verified = True  # type: ignore
 
-        await self._update(user) # type: ignore
+        await self._update(user)  # type: ignore
 
     async def _add_user(self, data: dict, router_prefix: str):
         existing_user = await self._get_by_email(data["email"])
@@ -63,15 +68,18 @@ class UserService(BaseService):
             password_hash=password_context.hash(password),
         )  # type: ignore
 
+        # * Add the use to database and get refreshed data
         user = await self._add(user)
-
-        token = generate_url_safe_tokn(
+        # * Generate the token with user id
+        token = generate_url_safe_token(
             {
-                "email": user.email,  # type: ignore
+                # ? Email can be skipped as not use in our case
+                # "email": user.email,  # type: ignore
                 "id": str(user.id),  # type: ignore
             }
         )
 
+        # * Send registration email with verification link
         await self.notification_service.send_email_with_template(
             recipients=[user.email],  # type: ignore
             subject="Verify Your Account with FastShip",
@@ -109,4 +117,30 @@ class UserService(BaseService):
                     "id": str(user.id),  # type: ignore
                 },
             }
+        )
+
+    async def send_password_reset_link(self, email: EmailStr, router_prefix: str):
+        user = await self._get_by_email(email)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"{router_prefix.title()} not found.",
+            )
+
+        token = generate_url_safe_token(
+            {
+                "id": user.id  # type: ignore
+            },
+            salt="password-reset",
+        )
+
+        await self.notification_service.send_email_with_template(
+            recipients=[user.email],  # type: ignore
+            subject="FastShip Account Password Reset",
+            context={
+                "username": user.name,
+                "reset_url": f"http://{app_settings.APP_DOMAIN}/{router_prefix}/reset_password?token={token}",
+            },
+            template_name="mail_password_reset.html",
         )

@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import EmailStr
 
 from ...database.redis import add_jti_to_blacklist
 
@@ -115,6 +116,7 @@ async def auth_check(
     return seller
 
 
+### Update Seller Info
 @router.patch("/")
 async def update_seller(
     id: UUID,
@@ -153,3 +155,14 @@ async def update_seller(
 
     # return await service._update(seller)  # type: ignore
     return await service._update(current_seller.sqlmodel_update(update))
+
+
+### Email Password Reset Link
+@router.get("/forgot-password")
+async def forgor_password(
+    email: EmailStr,
+    service: SellerServiceDep,
+):
+    await service.send_password_reset_link(email, router.prefix)
+
+    return {"detail": "Check email for password reset link."}
