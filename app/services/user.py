@@ -58,6 +58,12 @@ class UserService(BaseService):
                 detail="Invalid email or password.",
             )
 
+        if not user.email_verified:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email not verified.",
+            )
+
         return generate_access_token(
             data={
                 "user": {

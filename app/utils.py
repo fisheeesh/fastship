@@ -1,12 +1,14 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Union
 from uuid import uuid4
 
-
 import jwt
-from typing import Union
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from .config import security_settings
+
+_serializer = URLSafeTimedSerializer(security_settings.JWT_SECRET)
 
 # ? Reference of app directory
 APP_DIR = Path(__file__).resolve().parent
@@ -36,4 +38,18 @@ def decode_acces_token(token: str) -> Union[dict, None]:
             algorithms=[security_settings.JWT_ALGORITHM],
         )
     except jwt.PyJWTError:
+        return None
+
+
+def generate_url_safe_tokn(data: dict) -> str:
+    return _serializer.dumps(data)
+
+
+def decode_url_safe_token(token: str, expiry: timedelta | None = None) -> dict | None:
+    try:
+        return _serializer.loads(
+            token,
+            max_age=expiry.total_seconds() if expiry else None,  # type: ignore
+        )
+    except (BadSignature, SignatureExpired):
         return None
