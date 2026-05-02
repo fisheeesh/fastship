@@ -29,7 +29,7 @@ async def register_delivery_partner(
 
 
 ### Verify a delivery partner email
-@router.get("/verify")
+@router.post("/verify")
 async def verify_partner_email(
     token: str,
     service: PartnerServiceDep,
@@ -82,7 +82,7 @@ async def logout_delivery_partner(
 
 
 ### Forgot password link
-@router.get("/forgot-password")
+@router.post("/forgot-password")
 async def forgot_password(
     email: EmailStr,
     service: PartnerServiceDep,
@@ -90,3 +90,11 @@ async def forgot_password(
     await service.send_password_reset_link(email, router.prefix)
 
     return {"detail": "Check email for password reset link."}
+
+
+### Reset password
+@router.post("/reset-password")
+async def reset_password(token: str, password: str, service: PartnerServiceDep):
+    await service.reset_password(token, password)
+
+    return {"detail": "Successfully reset password!"}

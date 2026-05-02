@@ -67,7 +67,7 @@ async def login_seller(
 
 
 ### Verify Seller Email
-@router.get("/verify")
+@router.post("/verify")
 async def verify_serller_email(
     token: str,
     service: SellerServiceDep,
@@ -82,7 +82,7 @@ async def verify_serller_email(
 async def logout_seller(
     token_data: Annotated[dict, Depends(verify_seller_access_token)],
 ):
-    await add_jti_to_blacklist(token_data["jti"])
+    await add_jti_to_blacklist(token_data["jti"]) # type: ignore
 
     return {"details": "Successfully logged out as seller. See you again!"}
 
@@ -158,11 +158,23 @@ async def update_seller(
 
 
 ### Email Password Reset Link
-@router.get("/forgot-password")
-async def forgor_password(
+@router.post("/forgot-password")
+async def forgort_password(
     email: EmailStr,
     service: SellerServiceDep,
 ):
     await service.send_password_reset_link(email, router.prefix)
 
     return {"detail": "Check email for password reset link."}
+
+
+### Reset Seller Password
+@router.get("/reset-password")
+async def reset_password(
+    token: str,
+    password: str,
+    service: SellerServiceDep,
+):
+    await service.reset_password(token, password)
+
+    return {"detail": "Successfully reset password!"}

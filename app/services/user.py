@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Union
 from uuid import UUID
 
@@ -130,7 +131,7 @@ class UserService(BaseService):
 
         token = generate_url_safe_token(
             {
-                "id": user.id  # type: ignore
+                "id": str(user.id)  # type: ignore
             },
             salt="password-reset",
         )
@@ -140,7 +141,32 @@ class UserService(BaseService):
             subject="FastShip Account Password Reset",
             context={
                 "username": user.name,
-                "reset_url": f"http://{app_settings.APP_DOMAIN}/{router_prefix}/reset_password?token={token}",
+                "reset_url": f"http://{app_settings.APP_DOMAIN}{router_prefix}/reset-password?token={token}",
             },
             template_name="mail_password_reset.html",
         )
+
+    async def reset_password(self, token: str, password: str):
+        token_data = decode_url_safe_token(
+            token,
+            salt="password-reset",
+            expiry=timedelta(days=1),
+        )
+
+        if not token_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired token.",
+            )
+
+        user = await self._get(UUID(token_data["id"]))  # type: ignore
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found.",
+            )
+
+        user.password_hash = password_context.hash(password)
+
+        await self._update(user)
