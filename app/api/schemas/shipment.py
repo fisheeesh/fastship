@@ -22,11 +22,12 @@ class ShipmentRead(BaseShipment):
 
 class ShipmentCreate(BaseShipment):
     client_contact_email: EmailStr
-    client_contact_phone: int | None = Field(default=None)
+    client_contact_phone: str | None = Field(default=None)
 
 
 class ShipmentUpdate(BaseModel):
     location: Optional[int] = Field(default=None)
     description: Optional[str] = Field(default=None)
+    verification_code: Optional[str] = Field(default=None)
     status: Optional[ShipmentStatus] = Field(default=None)
     estimated_delivery: Optional[datetime] = Field(default=None)

@@ -5,6 +5,8 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
+from ..database.redis import get_shipment_verification_code
+
 from .shipment_event import ShipmentEventService
 
 from .base import BaseService
@@ -84,19 +86,34 @@ class ShipmentService(BaseService):
                 detail="Not authorized.",
             )
 
+        if shipment_update.status == ShipmentStatus.delivered:
+            code = await get_shipment_verification_code(shipment.id)
+
+            if code != shipment_update.verification_code:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Client not authorized.",
+                )
+
         if shipment_update.estimated_delivery is not None:
             shipment.estimated_delivery = shipment_update.estimated_delivery
 
-        if (
-            shipment_update.location is not None
-            or shipment_update.status is not None
-            or shipment_update.description is not None
-        ):
+        # ? Make sure to exclude none fields
+
+        update = shipment_update.model_dump(
+            exclude_none=True,
+            exclude=["verification_code"], # type: ignore
+        )
+        if not update:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No data provided to update.",
+            )
+
+        if len(update) > 1 or not shipment_update.estimated_delivery:
             await self.event_service.add(
                 shipment=shipment,
-                location=shipment_update.location,
-                status=shipment_update.status,
-                description=shipment_update.description,
+                **update,
             )
 
         return cast(Shipment, await self._update(shipment))

@@ -1,8 +1,11 @@
+from random import randint
 from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..database.redis import add_shipment_verification_code
 
 from .notification import NotificationService
 
@@ -89,6 +92,17 @@ class ShipmentEventService(BaseService):
                 subject = "Your Order is Arriving Soon 🔜"
                 template_name = "mail_out_for_delivery.html"
                 context = {}
+
+                code = randint(100_000, 999_999)
+                await add_shipment_verification_code(shipment.id, code)
+
+                if shipment.client_contact_phone:
+                    await self.notification_service.send_sms(
+                        to=shipment.client_contact_phone,  # type: ignore
+                        body=f"Your order is arriving soon! Shart the {code} code with the delivery executive to receive your package.",
+                    )
+                else:
+                    context = {"verification_code": code}
             case ShipmentStatus.delivered:
                 subject = "Your Order is Delivered ✅"
                 template_name = "mail_delivered.html"

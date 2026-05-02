@@ -49,14 +49,6 @@ async def update_shipment(
     shipment_update: ShipmentUpdate,
     service: ShipmentServiceDep,
 ):
-    # ? Make sure to exclude none fields
-    update = shipment_update.model_dump(exclude_none=True)
-    if not update:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No data provided to update.",
-        )
-
     return await service.update(id, shipment_update, partner)
 
 

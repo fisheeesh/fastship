@@ -32,7 +32,7 @@ async def register_delivery_partner(
 
 
 ### Verify a delivery partner email
-@router.post("/verify")
+@router.get("/verify")
 async def verify_partner_email(
     token: str,
     service: PartnerServiceDep,

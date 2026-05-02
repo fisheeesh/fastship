@@ -68,7 +68,7 @@ async def login_seller(
 
 
 ### Verify Seller Email
-@router.post("/verify")
+@router.get("/verify")
 async def verify_serller_email(
     token: str,
     service: SellerServiceDep,

@@ -1,7 +1,7 @@
 from fastapi import BackgroundTasks
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
-from twilio.rest import Client
+from twilio.rest import Client  # type: ignore
 
 from app.config import notification_settings
 
@@ -13,7 +13,9 @@ class NotificationService:
         self.tasks = tasks
         self.fastmail = FastMail(
             ConnectionConfig(
-                **notification_settings.model_dump(),
+                **notification_settings.model_dump(
+                    exclude=["TWILIO_SID", "TWILIO_AUTH_TOKEN", "TWILIO_NUMBER"]  # type: ignore
+                ),
                 TEMPLATE_FOLDER=TEMPLATE_DIR,
             )
         )
@@ -56,9 +58,17 @@ class NotificationService:
             template_name=template_name,
         )
 
+    async def _send_sms_task(self, to: str, body: str):
+        try:
+            await self.twilio_client.messages.create_async(
+                from_=notification_settings.TWILIO_NUMBER,
+                to=to,
+                body=body,
+            )
+            print(f"[SMS] Sent to {to}: {body}")
+        except Exception as e:
+            print(f"[SMS] Failed to send to {to}: {e}")
+            print(f"[SMS] Message body was: {body}")
+
     async def send_sms(self, to: str, body: str):
-        self.twilio_client.messages.create(
-            from_=notification_settings.TWILIO_NUMBER,
-            to=to,
-            body=body,
-        )
+        self.tasks.add_task(self._send_sms_task, to, body)
