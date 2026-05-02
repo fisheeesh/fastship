@@ -27,6 +27,17 @@ async def register_delivery_partner(
     return await service.add(partner)
 
 
+### Verify a delivery partner email
+@router.get("/verify")
+async def verify_partner_email(
+    token: str,
+    service: PartnerServiceDep,
+):
+    await service.verify_email(token)
+
+    return {"detail": "Your delivery partner account is verified!"}
+
+
 ### Login a delivery partner
 @router.post("/login")
 async def login_delivery_partner(
@@ -48,7 +59,7 @@ async def update_delivery_partner(
     partner: CurrentPartnerDep,
     service: PartnerServiceDep,
 ):
-     # ? Make sure to exclude none fields
+    # ? Make sure to exclude none fields
     update = partner_update.model_dump(exclude_none=True)
     if not update:
         raise HTTPException(

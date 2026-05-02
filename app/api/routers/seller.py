@@ -65,6 +65,17 @@ async def login_seller(
     }
 
 
+### Verify Seller Email
+@router.get("/verify")
+async def verify_serller_email(
+    token: str,
+    service: SellerServiceDep,
+):
+    await service.verify_email(token)
+
+    return {"detail": "Your seller account is verified!"}
+
+
 ### Logout the seller
 @router.get("/logout")
 async def logout_seller(

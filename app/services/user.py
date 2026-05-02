@@ -1,14 +1,15 @@
 from typing import Union
+from uuid import UUID
 
 from fastapi import BackgroundTasks, HTTPException, status
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.notification import NotificationService
+from .notification import NotificationService
 
 from ..database.models import User
-from ..utils import generate_access_token, generate_url_safe_tokn
+from ..utils import decode_url_safe_token, generate_access_token, generate_url_safe_tokn
 from .base import BaseService
 from app.config import app_settings
 
@@ -26,7 +27,21 @@ class UserService(BaseService):
             select(self.model).where(self.model.email == email),  # type: ignore
         )
 
-    async def _add_user(self, data: dict):
+    async def verify_email(self, token: str):
+        token_data = decode_url_safe_token(token)
+
+        if not token_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token.",
+            )
+
+        user = await self._get(UUID(token_data["id"]))
+        user.email_verified = True  # type: ignore
+
+        await self._update(user) # type: ignore
+
+    async def _add_user(self, data: dict, router_prefix: str):
         existing_user = await self._get_by_email(data["email"])
 
         if existing_user:
@@ -53,7 +68,7 @@ class UserService(BaseService):
         token = generate_url_safe_tokn(
             {
                 "email": user.email,  # type: ignore
-                "id": user.id,  # type: ignore
+                "id": str(user.id),  # type: ignore
             }
         )
 
@@ -62,7 +77,7 @@ class UserService(BaseService):
             subject="Verify Your Account with FastShip",
             context={
                 "username": user.name,  # type: ignore
-                "verification_url": f"http://{app_settings.APP_DOMAIN}/user/verify?token={token}",
+                "verification_url": f"http://{app_settings.APP_DOMAIN}/{router_prefix}/verify?token={token}",
             },
             template_name="mail_email_verify.html",
         )

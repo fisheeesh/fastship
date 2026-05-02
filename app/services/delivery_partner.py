@@ -13,7 +13,7 @@ class DeliveryPartnerService(UserService):
         super().__init__(DeliveryPartner, session, tasks)  # type: ignore
 
     async def add(self, delivery_partner: DeliveryPartnerCreate):
-        return await self._add_user(delivery_partner.model_dump())
+        return await self._add_user(delivery_partner.model_dump(), "partner")
 
     async def login(self, email, password) -> str:
         return await self._login(email, password)
