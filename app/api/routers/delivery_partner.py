@@ -1,8 +1,12 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
+from app.utils import TEMPLATE_DIR
+
+from app.config import app_settings
 
 from ...database.redis import add_jti_to_blacklist
 from ..dependencies import (
@@ -15,7 +19,6 @@ from ..schemas.delivery_partner import (
     DeliveryPartnerRead,
     DeliveryPartnerUPdate,
 )
-
 
 router = APIRouter(prefix="/partner", tags=["Delivery Partner"])
 
@@ -77,7 +80,7 @@ async def update_delivery_partner(
 async def logout_delivery_partner(
     token_data: Annotated[dict, Depends(verify_partner_access_token)],
 ):
-    await add_jti_to_blacklist(token_data["jti"])
+    await add_jti_to_blacklist(token_data["jti"])  # type: ignore
     return {"detail": "Successfully logged out as delivery partner. See you again!"}
 
 
@@ -92,9 +95,38 @@ async def forgot_password(
     return {"detail": "Check email for password reset link."}
 
 
+### Reset password form
+@router.get("/reset-password-form")
+async def get_reset_password_form(
+    request: Request,
+    token: str,
+):
+    templates = Jinja2Templates(TEMPLATE_DIR)
+
+    return templates.TemplateResponse(
+        request=request,
+        context={
+            "reset_url": f"http://{app_settings.APP_DOMAIN}{router.prefix}/reset-password?token={token}"
+        },
+        name="password/reset.html",
+    )
+
+
 ### Reset password
 @router.post("/reset-password")
-async def reset_password(token: str, password: str, service: PartnerServiceDep):
-    await service.reset_password(token, password)
+async def reset_password(
+    request: Request,
+    token: str,
+    password: str,
+    service: PartnerServiceDep,
+):
+    is_success = await service.reset_password(token, password)
 
-    return {"detail": "Successfully reset password!"}
+    templates = Jinja2Templates(TEMPLATE_DIR)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="password/reset_success.html"
+        if is_success
+        else "password/reset_failed.html",
+    )

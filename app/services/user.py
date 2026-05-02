@@ -43,7 +43,13 @@ class UserService(BaseService):
             )
 
         user = await self._get(UUID(token_data["id"]))
-        user.email_verified = True  # type: ignore
+
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found.",
+            )
+        user.email_verified = True
 
         await self._update(user)  # type: ignore
 
@@ -141,12 +147,12 @@ class UserService(BaseService):
             subject="FastShip Account Password Reset",
             context={
                 "username": user.name,
-                "reset_url": f"http://{app_settings.APP_DOMAIN}{router_prefix}/reset-password?token={token}",
+                "reset_url": f"http://{app_settings.APP_DOMAIN}{router_prefix}/reset-password-form?token={token}",
             },
             template_name="mail_password_reset.html",
         )
 
-    async def reset_password(self, token: str, password: str):
+    async def reset_password(self, token: str, password: str) -> bool:
         token_data = decode_url_safe_token(
             token,
             salt="password-reset",
@@ -154,10 +160,7 @@ class UserService(BaseService):
         )
 
         if not token_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired token.",
-            )
+            return False
 
         user = await self._get(UUID(token_data["id"]))  # type: ignore
 
@@ -170,3 +173,5 @@ class UserService(BaseService):
         user.password_hash = password_context.hash(password)
 
         await self._update(user)
+
+        return True

@@ -1,14 +1,17 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 
+from app.config import app_settings
+
+from ...core.security import oauth2_scheme_seller
+from ...database.models import Seller
 from ...database.redis import add_jti_to_blacklist
-
-from ...utils import decode_acces_token
-
+from ...utils import TEMPLATE_DIR, decode_acces_token
 from ..dependencies import (
     CurrentSellerDep,
     SellerServiceDep,
@@ -16,8 +19,6 @@ from ..dependencies import (
     verify_seller_access_token,
 )
 from ..schemas.seller import SellerCreate, SellerRead, SellerUpdate
-from ...database.models import Seller
-from ...core.security import oauth2_scheme_seller
 
 router = APIRouter(prefix="/seller", tags=["Seller"])
 
@@ -82,7 +83,7 @@ async def verify_serller_email(
 async def logout_seller(
     token_data: Annotated[dict, Depends(verify_seller_access_token)],
 ):
-    await add_jti_to_blacklist(token_data["jti"]) # type: ignore
+    await add_jti_to_blacklist(token_data["jti"])  # type: ignore
 
     return {"details": "Successfully logged out as seller. See you again!"}
 
@@ -168,13 +169,35 @@ async def forgort_password(
     return {"detail": "Check email for password reset link."}
 
 
+### Passwrod Reset Form
+@router.get("/reset-password-form")
+async def get_reset_password_form(request: Request, token: str):
+    templates = Jinja2Templates(TEMPLATE_DIR)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="password/reset.html",
+        context={
+            "reset_url": f"http://{app_settings.APP_DOMAIN}{router.prefix}/reset-password?token={token}"
+        },
+    )
+
+
 ### Reset Seller Password
-@router.get("/reset-password")
+@router.post("/reset-password")
 async def reset_password(
+    request: Request,
     token: str,
-    password: str,
+    password: Annotated[str, Form()],
     service: SellerServiceDep,
 ):
-    await service.reset_password(token, password)
+    is_success = await service.reset_password(token, password)
 
-    return {"detail": "Successfully reset password!"}
+    templates = Jinja2Templates(TEMPLATE_DIR)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="password/reset_success.html"
+        if is_success
+        else "password/reset_failed.html",
+    )
