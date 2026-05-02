@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import HTMLResponse
 
 from ..dependencies import (
     CurrentPartnerDep,
@@ -17,33 +18,10 @@ router = APIRouter(prefix="/shipment", tags=["Shipment"])
 
 
 # ! FastAPI only looks for dependencies inside of the endpoints, not anywhere else
-### Cancel a shipment by id
-@router.get("/cancel", response_model=ShipmentRead)
-async def cancel_shipment(
-    id: UUID,
-    seller: CurrentSellerDep,
-    service: ShipmentServiceDep,
-):
-    return await service.cancel(id, seller)
-
-
-### Delete a shipment by id
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_shipment(
-    id: UUID,
-    seller: CurrentSellerDep,
-    service: ShipmentServiceDep,
-):
-    await service.delete(id, seller)
-
-    return {"message": f"Deleted shipment with {id} successfully!"}
-
-
 ### Read a shipment by id
-@router.get("/{id}", response_model=ShipmentRead)
+@router.get("/", response_model=ShipmentRead)
 async def get_shipment(
     id: UUID,
-    _: CurrentSellerDep,
     service: ShipmentServiceDep,
 ):
     return await service.get(id)
@@ -77,3 +55,38 @@ async def update_shipment(
         )
 
     return await service.update(id, shipment_update, partner)
+
+
+### Delete a shipment by id
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_shipment(
+    id: UUID,
+    seller: CurrentSellerDep,
+    service: ShipmentServiceDep,
+):
+    await service.delete(id, seller)
+
+    return {"message": f"Deleted shipment with {id} successfully!"}
+
+
+### Cancel a shipment by id
+@router.post("/cancel", response_model=ShipmentRead)
+async def cancel_shipment(
+    id: UUID,
+    seller: CurrentSellerDep,
+    service: ShipmentServiceDep,
+):
+    return await service.cancel(id, seller)
+
+
+### Track details of a shipment
+@router.get("/track")
+async def get_tracking(
+    id: UUID,
+    service: ShipmentServiceDep,
+):
+    shipment = await service.get(id)
+
+    return HTMLResponse(
+        content=f"<body><h1>Order #{shipment.id} : {shipment.status}</h1></body>"
+    )

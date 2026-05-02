@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import delete
@@ -74,13 +74,14 @@ class ShipmentEventService(BaseService):
 
         subject: str
         template_name: str
-        context: dict[str, str]
+        context: dict[str, Any]
 
         match status:
             case ShipmentStatus.placed:
                 subject = "Your Order is Shipping 🚐"
                 template_name = "mail_placed.html"
                 context = {
+                    "id": shipment.id,
                     "seller": shipment.seller.name,
                     "partner": shipment.delivery_partner.name,
                 }
