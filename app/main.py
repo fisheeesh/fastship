@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import BackgroundTasks, FastAPI
+from fastapi.responses import RedirectResponse
 from scalar_fastapi import get_scalar_api_reference
 
 from .services.notification import NotificationService
@@ -51,3 +52,14 @@ def get_scalar_docs():
         openapi_url=app.openapi_url,
         title="Scalar API",
     )
+
+
+### Custom Response
+@app.get("/custom", response_class=RedirectResponse)
+def get_custom_reponse():
+    return "http://localhost:8000/custom-new"
+
+
+@app.get("/custom-new")
+def get_new_data():
+    return "NEW CUSTOM RESPON SE!"

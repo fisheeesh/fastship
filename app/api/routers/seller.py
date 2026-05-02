@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -7,12 +8,41 @@ from ...database.redis import add_jti_to_blacklist
 
 from ...utils import decode_acces_token
 
-from ..dependencies import SellerServiceDep, SessionDep, verify_seller_access_token
-from ..schemas.seller import SellerCreate, SellerRead
+from ..dependencies import (
+    CurrentSellerDep,
+    SellerServiceDep,
+    SessionDep,
+    verify_seller_access_token,
+)
+from ..schemas.seller import SellerCreate, SellerRead, SellerUpdate
 from ...database.models import Seller
 from ...core.security import oauth2_scheme_seller
 
 router = APIRouter(prefix="/seller", tags=["Seller"])
+
+
+### Get a seller info
+@router.get("/", response_model=SellerRead)
+async def get_seller(
+    id: UUID,
+    current_seller: CurrentSellerDep,
+    service: SellerServiceDep,
+):
+    seller = await service._get(id)
+
+    if seller is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Seller not found.",
+        )
+
+    if seller.id != current_seller.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to update this seller.",
+        )
+
+    return seller
 
 
 ### Register a seller
@@ -72,3 +102,43 @@ async def auth_check(
         )
 
     return seller
+
+
+@router.patch("/")
+async def update_seller(
+    id: UUID,
+    seller_update: SellerUpdate,
+    current_seller: CurrentSellerDep,
+    service: SellerServiceDep,
+):
+    seller = await service._get(id)
+
+    if seller is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Seller not found.",
+        )
+
+    if seller.id != current_seller.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to update this seller.",
+        )
+
+    update = seller_update.model_dump(exclude_none=True)
+
+    if not update:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="No data provided to update.",
+        )
+
+    # if seller_update.name is not None:
+    #     seller.name = seller_update.name
+    # if seller_update.address is not None:
+    #     seller.address = seller_update.address
+    # if seller_update.zip_code is not None:
+    #     seller.zip_code = seller_update.zip_code
+
+    # return await service._update(seller)  # type: ignore
+    return await service._update(current_seller.sqlmodel_update(update))
