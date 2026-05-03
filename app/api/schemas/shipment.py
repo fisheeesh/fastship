@@ -34,5 +34,5 @@ class ShipmentUpdate(BaseModel):
 
 
 class ShipmentReview(BaseModel):
-    rating: int = Field(ge=1, let=5)  # type: ignore
+    rating: int = Field(ge=1, le=5)
     commnet: Union[str, None] = Field(default=None)

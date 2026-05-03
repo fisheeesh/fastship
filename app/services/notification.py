@@ -80,13 +80,12 @@ class NotificationService:
                     ),
                 )
                 response.raise_for_status()
-                print(f"[SMS] Sent to {to}: {body}")
+                print(f"[SMS] Sent successfully to {to}")
         except httpx.HTTPStatusError as e:
-            print(f"[SMS] Failed to send to {to}: {e}")
-            print(f"[SMS] Response body: {e.response.text}")
+            print(f"[SMS] HTTP error {e.response.status_code}: {e.response.text}")
             print(f"[SMS] Message body was: {body}")
         except Exception as e:
-            print(f"[SMS] Failed to send to {to}: {e}")
+            print(f"[SMS] Failed to send to {to}: {repr(e)}")
             print(f"[SMS] Message body was: {body}")
 
     async def send_sms(self, to: str, body: str):

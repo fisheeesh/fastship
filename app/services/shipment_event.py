@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import generate_url_safe_token
+from ..utils import generate_url_safe_token
 
 from ..database.redis import add_shipment_verification_code
 
@@ -107,13 +107,13 @@ class ShipmentEventService(BaseService):
                 else:
                     context = {"verification_code": code}
             case ShipmentStatus.delivered:
-                token = generate_url_safe_token({"id":str(shipment.id)})
+                token = generate_url_safe_token({"id": str(shipment.id)})
 
                 subject = "Your Order is Delivered ✅"
                 template_name = "mail_delivered.html"
                 context = {
                     "seller": shipment.seller.name,
-                    "review_url": f"http://{app_settings.APP_DOMAIN}/shipment/review?token={token}",
+                    "review_url": f"http://{app_settings.APP_DOMAIN}/shipment/review-form?token={token}",
                 }
             case ShipmentStatus.cancelled:
                 subject = "Your Order Was Cancelled"
