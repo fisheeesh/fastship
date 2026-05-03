@@ -1,11 +1,13 @@
 from fastapi import BackgroundTasks
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import EmailStr
-from twilio.rest import Client  # type: ignore
+import httpx
 
 from app.config import notification_settings
 
 from ..utils import TEMPLATE_DIR
+
+_THAIBULKSMS_URL = "https://api-v2.thaibulksms.com/sms"
 
 
 class NotificationService:
@@ -14,14 +16,14 @@ class NotificationService:
         self.fastmail = FastMail(
             ConnectionConfig(
                 **notification_settings.model_dump(
-                    exclude=["TWILIO_SID", "TWILIO_AUTH_TOKEN", "TWILIO_NUMBER"]  # type: ignore
+                    exclude=[
+                        "THAIBULKSMS_API_KEY",
+                        "THAIBULKSMS_API_SECRET",
+                        "THAIBULKSMS_SENDER",
+                    ]  # type: ignore
                 ),
                 TEMPLATE_FOLDER=TEMPLATE_DIR,
             )
-        )
-        self.twilio_client = Client(
-            notification_settings.TWILIO_SID,
-            notification_settings.TWILIO_AUTH_TOKEN,
         )
 
     async def send_email(
@@ -60,12 +62,29 @@ class NotificationService:
 
     async def _send_sms_task(self, to: str, body: str):
         try:
-            await self.twilio_client.messages.create_async(
-                from_=notification_settings.TWILIO_NUMBER,
-                to=to,
-                body=body,
-            )
-            print(f"[SMS] Sent to {to}: {body}")
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    _THAIBULKSMS_URL,
+                    headers={
+                        "accept": "application/json",
+                        "content-type": "application/x-www-form-urlencoded",
+                    },
+                    data={
+                        "msisdn": to,
+                        "message": body,
+                        "sender": notification_settings.THAIBULKSMS_SENDER,
+                    },
+                    auth=(
+                        notification_settings.THAIBULKSMS_API_KEY,
+                        notification_settings.THAIBULKSMS_API_SECRET,
+                    ),
+                )
+                response.raise_for_status()
+                print(f"[SMS] Sent to {to}: {body}")
+        except httpx.HTTPStatusError as e:
+            print(f"[SMS] Failed to send to {to}: {e}")
+            print(f"[SMS] Response body: {e.response.text}")
+            print(f"[SMS] Message body was: {body}")
         except Exception as e:
             print(f"[SMS] Failed to send to {to}: {e}")
             print(f"[SMS] Message body was: {body}")

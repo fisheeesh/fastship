@@ -99,7 +99,7 @@ class ShipmentEventService(BaseService):
                 if shipment.client_contact_phone:
                     await self.notification_service.send_sms(
                         to=shipment.client_contact_phone,  # type: ignore
-                        body=f"Your order is arriving soon! Shart the {code} code with the delivery executive to receive your package.",
+                        body=f"Your order is arriving soon! Share the {code} code with the delivery executive to receive your package.",
                     )
                 else:
                     context = {"verification_code": code}
