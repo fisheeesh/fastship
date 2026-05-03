@@ -74,6 +74,12 @@ class ShipmentService(BaseService):
         # ? on the shipment with given id
         shipment = await self.get(id)
 
+        if shipment.status == ShipmentStatus.delivered:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This shipment is already delivered. You cannot edit it.",
+            )
+
         if shipment.status == ShipmentStatus.cancelled:
             raise HTTPException(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
@@ -86,6 +92,7 @@ class ShipmentService(BaseService):
                 detail="Not authorized.",
             )
 
+        # ? Verify that the clinet is actaul client or not
         if shipment_update.status == ShipmentStatus.delivered:
             code = await get_shipment_verification_code(shipment.id)
 
@@ -99,10 +106,9 @@ class ShipmentService(BaseService):
             shipment.estimated_delivery = shipment_update.estimated_delivery
 
         # ? Make sure to exclude none fields
-
         update = shipment_update.model_dump(
             exclude_none=True,
-            exclude=["verification_code"], # type: ignore
+            exclude=["verification_code"],  # type: ignore
         )
         if not update:
             raise HTTPException(
