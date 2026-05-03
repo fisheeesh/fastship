@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, Union
 
 from ...database.models import ShipmentEvent, ShipmentStatus
 
@@ -31,3 +31,8 @@ class ShipmentUpdate(BaseModel):
     verification_code: Optional[str] = Field(default=None)
     status: Optional[ShipmentStatus] = Field(default=None)
     estimated_delivery: Optional[datetime] = Field(default=None)
+
+
+class ShipmentReview(BaseModel):
+    rating: int = Field(ge=1, let=5)  # type: ignore
+    commnet: Union[str, None] = Field(default=None)

@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Request, status
 from fastapi.templating import Jinja2Templates
+
 from app.utils import TEMPLATE_DIR
 
 from ..dependencies import (
@@ -12,6 +13,7 @@ from ..dependencies import (
 from ..schemas.shipment import (
     ShipmentCreate,
     ShipmentRead,
+    ShipmentReview,
     ShipmentUpdate,
 )
 
@@ -96,3 +98,15 @@ async def get_tracking(
         name="track.html",
         context=context,
     )
+
+
+### Submit a review for a shipment
+@router.post("/review")
+async def submit_review(
+    token: str,
+    review: ShipmentReview,
+    service: ShipmentServiceDep,
+):
+    await service.rate(token, review)
+
+    return {"detail": "Review Submitted! Thank you."}

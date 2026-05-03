@@ -5,6 +5,8 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
+from utils import decode_url_safe_token
+
 from ..database.redis import get_shipment_verification_code
 
 from .shipment_event import ShipmentEventService
@@ -12,8 +14,8 @@ from .shipment_event import ShipmentEventService
 from .base import BaseService
 from .delivery_partner import DeliveryPartnerService
 
-from ..api.schemas.shipment import ShipmentCreate, ShipmentUpdate
-from ..database.models import DeliveryPartner, Seller, Shipment, ShipmentStatus
+from ..api.schemas.shipment import ShipmentCreate, ShipmentReview, ShipmentUpdate
+from ..database.models import DeliveryPartner, Review, Seller, Shipment, ShipmentStatus
 
 
 class ShipmentService(BaseService):
@@ -164,3 +166,22 @@ class ShipmentService(BaseService):
         except Exception:
             await self.session.rollback()
             raise
+
+    async def rate(self, token: str, review: ShipmentReview):
+        token_data = decode_url_safe_token(token)
+
+        if token is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token.",
+            )
+
+        shipment = await self.get(UUID(token_data["id"]))  # type: ignore
+
+        new_review = Review(
+            **review.model_dump(),
+            shipment_id=shipment.id,
+        )
+
+        self.session.add(new_review)
+        await self.session.commit()
