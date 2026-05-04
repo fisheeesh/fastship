@@ -5,11 +5,11 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.worker.tasks import send_email_with_template, send_sms
+
 from ..utils import generate_url_safe_token
 
 from ..database.redis import add_shipment_verification_code
-
-from .notification import NotificationService
 
 from ..database.models import Shipment, ShipmentEvent, ShipmentStatus
 from .base import BaseService
@@ -17,9 +17,8 @@ from app.config import app_settings
 
 
 class ShipmentEventService(BaseService):
-    def __init__(self, session: AsyncSession, tasks):
+    def __init__(self, session: AsyncSession):
         super().__init__(ShipmentEvent, session)  # type: ignore
-        self.notification_service = NotificationService(tasks)
 
     async def add(
         self,
@@ -100,7 +99,7 @@ class ShipmentEventService(BaseService):
                 await add_shipment_verification_code(shipment.id, code)
 
                 if shipment.client_contact_phone:
-                    await self.notification_service.send_sms(
+                    send_sms.delay(
                         to=shipment.client_contact_phone,  # type: ignore
                         body=f"Your order is arriving soon! Share the {code} code with the delivery executive to receive your package.",
                     )
@@ -120,7 +119,7 @@ class ShipmentEventService(BaseService):
                 template_name = "mail_cancelled.html"
                 context = {}
 
-        await self.notification_service.send_email_with_template(
+        send_email_with_template.delay(
             recipients=[shipment.client_contact_email],
             subject=subject,
             context=context,

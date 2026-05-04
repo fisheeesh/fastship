@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import BackgroundTasks, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..core.security import oauth2_scheme_partner, oauth2_scheme_seller
@@ -10,8 +10,8 @@ from ..database.redis import is_jti_blacklisted
 from ..database.session import get_session
 from ..services.delivery_partner import DeliveryPartnerService
 from ..services.seller import SellerService
-from ..services.shipment_event import ShipmentEventService
 from ..services.shipment import ShipmentService
+from ..services.shipment_event import ShipmentEventService
 from ..utils import decode_acces_token
 
 # $ Annotated -> [type, bl ka ya ll]
@@ -95,22 +95,22 @@ async def get_current_partner(
 
 
 # * Shipment service dep
-def get_shipment_service(session: SessionDep, tasks: BackgroundTasks):
+def get_shipment_service(session: SessionDep):
     return ShipmentService(
         session,
-        DeliveryPartnerService(session, tasks),
-        ShipmentEventService(session, tasks),
+        DeliveryPartnerService(session),
+        ShipmentEventService(session),
     )
 
 
 # * Seller service dep
-def get_seller_service(session: SessionDep, tasks: BackgroundTasks):
-    return SellerService(session, tasks)
+def get_seller_service(session: SessionDep):
+    return SellerService(session)
 
 
 # * Delivery partner service dep
-def get_delivery_partner_service(session: SessionDep, tasks: BackgroundTasks):
-    return DeliveryPartnerService(session, tasks)
+def get_delivery_partner_service(session: SessionDep):
+    return DeliveryPartnerService(session)
 
 
 # * Current Seller Dep

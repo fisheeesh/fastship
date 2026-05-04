@@ -2,13 +2,13 @@ from datetime import timedelta
 from typing import Union
 from uuid import UUID
 
-from fastapi import BackgroundTasks, HTTPException, status
+from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .notification import NotificationService
+from app.worker.tasks import send_email_with_template
 
 from ..database.models import User
 from ..utils import (
@@ -24,9 +24,8 @@ password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserService(BaseService):
-    def __init__(self, model: User, session: AsyncSession, tasks: BackgroundTasks):
+    def __init__(self, model: User, session: AsyncSession,):
         super().__init__(model, session)
-        self.notification_service = NotificationService(tasks)
 
     async def _get_by_email(self, email) -> Union[User, None]:
         return await self.session.scalar(
@@ -87,7 +86,7 @@ class UserService(BaseService):
         )
 
         # * Send registration email with verification link
-        await self.notification_service.send_email_with_template(
+        send_email_with_template.delay(
             recipients=[user.email],  # type: ignore
             subject="Verify Your Account with FastShip",
             context={
@@ -142,7 +141,7 @@ class UserService(BaseService):
             salt="password-reset",
         )
 
-        await self.notification_service.send_email_with_template(
+        send_email_with_template.delay(
             recipients=[user.email],  # type: ignore
             subject="FastShip Account Password Reset",
             context={

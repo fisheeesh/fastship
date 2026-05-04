@@ -9,8 +9,8 @@ from .user import UserService
 
 
 class DeliveryPartnerService(UserService):
-    def __init__(self, session, tasks) -> None:
-        super().__init__(DeliveryPartner, session, tasks)  # type: ignore
+    def __init__(self, session) -> None:
+        super().__init__(DeliveryPartner, session)  # type: ignore
 
     async def add(self, delivery_partner: DeliveryPartnerCreate):
         return await self._add_user(delivery_partner.model_dump(), "partner")

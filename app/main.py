@@ -5,6 +5,8 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi.responses import RedirectResponse
 from scalar_fastapi import get_scalar_api_reference
 
+from app.worker.tasks import background_task, send_mail
+
 from .services.notification import NotificationService
 
 from .api.router import master_router
@@ -63,3 +65,21 @@ def get_custom_reponse():
 @app.get("/custom-new")
 def get_new_data():
     return "NEW CUSTOM RESPON SE!"
+
+
+@app.get("/test")
+def test():
+    send_mail.delay(
+        recipients=["koswam779@gmail.com"],
+        subject="hi",
+        body="hi",
+    )
+
+    now = datetime.now()
+    background_task.delay(
+        f"Background Task {now.second}",
+        data={
+            "min": now.minute,
+            "sec": now.second,
+        },
+    )
