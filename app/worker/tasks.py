@@ -48,7 +48,7 @@ def send_mail(
             recipients=recipients,  # type: ignore
             subject=subject,
             body=body,
-            # subtype=MessageType.plain,
+            subtype=MessageType.plain,
         )
     )
 

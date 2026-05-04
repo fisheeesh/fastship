@@ -2,11 +2,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Union
 from uuid import UUID, uuid4
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from pydantic import EmailStr
 from sqlalchemy import ARRAY, INTEGER, Column, ForeignKey
 from sqlalchemy.dialects import postgresql
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, select
 
 
 class ShipmentStatus(str, Enum):
@@ -15,6 +16,62 @@ class ShipmentStatus(str, Enum):
     out_for_delivery = "out_for_delivery"
     delivered = "delivered"
     cancelled = "cancelled"
+
+
+class TagName(str, Enum):
+    EXPRESS = "express"
+    STANDARD = "standard"
+    FRAGILE = "fragile"
+    HEAVY = "heavy"
+    INTERNATIONAL = "international"
+    DOMESTIC = "domestic"
+    TEMPERATURE_CONTROLLED = "temperature_controlled"
+    GIFT = "gift"
+    RETURN = "return"
+    DOCUMENTS = "documents"
+
+    async def tag(self, session: AsyncSession):
+        return await session.scalar(
+            select(Tag).where(Tag.name == self.value),
+        )
+
+
+class ShipmentTag(SQLModel, table=True):
+    __tablename__ = "shipment_tag"  # type: ignore
+
+    shipment_id: UUID = Field(
+        foreign_key="shipment.id",
+        primary_key=True,
+    )
+    tag_id: UUID = Field(
+        foreign_key="tag.id",
+        primary_key=True,
+    )
+
+
+class Tag(SQLModel, table=True):
+    __tablename__ = "tag"  # type: ignore
+    id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            primary_key=True,
+            default=uuid4,
+        )
+    )
+    created_at: datetime = Field(
+        sa_column=Column(
+            postgresql.TIMESTAMP,
+            default=datetime.now,
+        )
+    )
+    name: TagName
+    instruction: str
+
+    shipments: list["Shipment"] = Relationship(
+        back_populates="tags",
+        link_model=ShipmentTag,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
 
 class Shipment(SQLModel, table=True):
@@ -68,6 +125,12 @@ class Shipment(SQLModel, table=True):
             "single_parent": True,
             "passive_deletes": True,
         },
+    )
+
+    tags: list["Tag"] = Relationship(
+        back_populates="shipments",
+        link_model=ShipmentTag,
+        sa_relationship_kwargs={"lazy": "selectin"},
     )
 
     @property

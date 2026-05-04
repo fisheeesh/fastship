@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Union
 
-from ...database.models import ShipmentEvent, ShipmentStatus
+from ...database.models import ShipmentEvent, ShipmentStatus, TagName
 
 
 class BaseShipment(BaseModel):
@@ -13,11 +13,17 @@ class BaseShipment(BaseModel):
     destination: int
 
 
+class TagRead(BaseModel):
+    name: TagName
+    instruction: str
+
+
 class ShipmentRead(BaseShipment):
     id: UUID
     timeline: list[ShipmentEvent]
     estimated_delivery: datetime | None
     # seller: Seller
+    tags: list[TagRead]
 
 
 class ShipmentCreate(BaseShipment):
