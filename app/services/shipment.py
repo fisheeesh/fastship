@@ -5,6 +5,12 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import (
+    ClientNotAuthorized,
+    EntityNotFound,
+    InvalidToken,
+)
+
 from ..api.schemas.shipment import ShipmentCreate, ShipmentUpdate
 from ..database.models import (
     DeliveryPartner,
@@ -36,10 +42,7 @@ class ShipmentService(BaseService):
         shipment = await self._get(id)
 
         if shipment is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Shipment with given id does not exist.",
-            )
+            raise EntityNotFound()
 
         return shipment
 
@@ -92,20 +95,14 @@ class ShipmentService(BaseService):
             )
 
         if shipment.delivery_partner_id != partner.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized.",
-            )
+            raise ClientNotAuthorized()
 
         # ? Verify that the clinet is actaul client or not
         if shipment_update.status == ShipmentStatus.delivered:
             code = await get_shipment_verification_code(shipment.id)
 
             if code != shipment_update.verification_code:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Client not authorized.",
-                )
+                raise ClientNotAuthorized()
 
         if shipment_update.estimated_delivery is not None:
             shipment.estimated_delivery = shipment_update.estimated_delivery
@@ -140,10 +137,7 @@ class ShipmentService(BaseService):
             )
 
         if shipment.seller_id != seller.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized.",
-            )
+            raise ClientNotAuthorized()
 
         event = await self.event_service.add(
             shipment=shipment,
@@ -158,10 +152,7 @@ class ShipmentService(BaseService):
         shipment = await self.get(id)
 
         if shipment.seller_id != seller.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized.",
-            )
+            raise ClientNotAuthorized()
 
         try:
             await self.event_service.delete_by_shipment(shipment.id)
@@ -174,10 +165,7 @@ class ShipmentService(BaseService):
         token_data = decode_url_safe_token(token)
 
         if token is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token.",
-            )
+            raise InvalidToken()
 
         shipment = await self.get(UUID(token_data["id"]))  # type: ignore
 
@@ -195,10 +183,7 @@ class ShipmentService(BaseService):
         tag = await tag_name.tag(self.session)
 
         if tag is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Tag not found.",
-            )
+            raise EntityNotFound()
 
         if any(existing_tag.id == tag.id for existing_tag in shipment.tags):
             raise HTTPException(
@@ -215,17 +200,11 @@ class ShipmentService(BaseService):
         tag = await tag_name.tag(self.session)
 
         if tag is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Tag not found.",
-            )
+            raise EntityNotFound()
 
         try:
             shipment.tags.remove(tag)
         except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Tag doesn't exist on shipment.",
-            )
+            raise EntityNotFound()
 
         return await self._update(shipment)
