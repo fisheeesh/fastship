@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, status
+from fastapi import BackgroundTasks, FastAPI
 from fastapi.responses import RedirectResponse
 from scalar_fastapi import get_scalar_api_reference
 
 from app.worker.tasks import background_task, send_mail
-from app.core.exceptions import InvalidToken
+from app.core.exceptions import add_exception_handlers
 
 from .services.notification import NotificationService
 
@@ -27,22 +27,8 @@ app = FastAPI(
 
 app.include_router(master_router)
 
-
-def handler(request, exception):
-    # return JSONResponse(
-    #     content={"detail": "Token is invalid or expired."},
-    #     status_code=400,
-    # )
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Token is invalid or expired.",
-    )
-
-
-app.add_exception_handler(
-    InvalidToken,
-    handler,
-)
+# ? Exception handlers
+add_exception_handlers(app)
 
 
 @app.get("/mail")
