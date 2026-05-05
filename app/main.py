@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.responses import RedirectResponse
 from scalar_fastapi import get_scalar_api_reference
@@ -23,6 +24,14 @@ async def lifespan_handler(app: FastAPI):
 app = FastAPI(
     # * server start/stop listener
     lifespan=lifespan_handler,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_methods=["*"],
 )
 
 app.include_router(master_router)
