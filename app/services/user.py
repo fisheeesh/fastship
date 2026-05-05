@@ -2,7 +2,6 @@ from datetime import timedelta
 from typing import Union
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from pydantic import EmailStr
 from sqlalchemy import select
@@ -10,6 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.worker.tasks import send_email_with_template
 
+from ..core.exceptions import (
+    BadCredentials,
+    BadPassword,
+    ClientNotVerified,
+    EntityNotFound,
+    FastShipException,
+    InvalidToken,
+)
 from ..database.models import User
 from ..utils import (
     decode_url_safe_token,
@@ -36,18 +43,12 @@ class UserService(BaseService):
         token_data = decode_url_safe_token(token)
 
         if not token_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token.",
-            )
+            raise InvalidToken("Invalid token.")
 
         user = await self._get(UUID(token_data["id"]))
 
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found.",
-            )
+            raise EntityNotFound("User not found.")
         user.email_verified = True
 
         await self._update(user)  # type: ignore
@@ -56,18 +57,14 @@ class UserService(BaseService):
         existing_user = await self._get_by_email(data["email"])
 
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This email has been registered. Try again with another email.",
+            raise FastShipException(
+                "This email has been registered. Try again with another email.",
             )
 
         user_data = dict(data)
         password = user_data.pop("password", None)
         if password is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password is required.",
-            )
+            raise BadPassword("Password is required.")
 
         user = self.model(
             **user_data,
@@ -105,16 +102,10 @@ class UserService(BaseService):
             password,
             user.password_hash,
         ):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Invalid email or password.",
-            )
+            raise BadCredentials("Invalid email or password.")
 
         if not user.email_verified:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Email not verified.",
-            )
+            raise ClientNotVerified("Email not verified.")
 
         return generate_access_token(
             data={
@@ -129,10 +120,7 @@ class UserService(BaseService):
         user = await self._get_by_email(email)
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"{router_prefix.title()} not found.",
-            )
+            raise EntityNotFound(f"{router_prefix.title()} not found.")
 
         token = generate_url_safe_token(
             {
@@ -164,10 +152,7 @@ class UserService(BaseService):
         user = await self._get(UUID(token_data["id"]))  # type: ignore
 
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found.",
-            )
+            raise EntityNotFound("User not found.")
 
         user.password_hash = password_context.hash(password)
 

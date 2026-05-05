@@ -1,12 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 from app.utils import TEMPLATE_DIR
 
 from app.config import app_settings
+from app.core.exceptions import NothingToUpdate
 
 from ...database.redis import add_jti_to_blacklist
 from ..dependencies import (
@@ -66,10 +67,7 @@ async def update_delivery_partner(
     # ? Make sure to exclude none fields
     update = partner_update.model_dump(exclude_none=True)
     if not update:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No data provided to update.",
-        )
+        raise NothingToUpdate("No data provided to update.")
     return await service.update(
         partner.sqlmodel_update(update),
     )

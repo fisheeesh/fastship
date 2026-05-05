@@ -2,13 +2,14 @@ from datetime import datetime, timedelta
 from typing import cast
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     ClientNotAuthorized,
     EntityNotFound,
+    FastShipException,
     InvalidToken,
+    NothingToUpdate,
 )
 
 from ..api.schemas.shipment import ShipmentCreate, ShipmentUpdate
@@ -83,16 +84,12 @@ class ShipmentService(BaseService):
         shipment = await self.get(id)
 
         if shipment.status == ShipmentStatus.delivered:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This shipment is already delivered. You cannot edit it.",
+            raise FastShipException(
+                "This shipment is already delivered. You cannot edit it.",
             )
 
         if shipment.status == ShipmentStatus.cancelled:
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="You cannot edit to cancelled shipment.",
-            )
+            raise FastShipException("You cannot edit to cancelled shipment.")
 
         if shipment.delivery_partner_id != partner.id:
             raise ClientNotAuthorized()
@@ -113,10 +110,7 @@ class ShipmentService(BaseService):
             exclude=["verification_code"],  # type: ignore
         )
         if not update:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No data provided to update.",
-            )
+            raise NothingToUpdate()
 
         if len(update) > 1 or not shipment_update.estimated_delivery:
             await self.event_service.add(
@@ -131,10 +125,7 @@ class ShipmentService(BaseService):
         shipment = await self.get(id)
 
         if shipment.status == ShipmentStatus.cancelled:
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="This shipment is already cancelled.",
-            )
+            raise FastShipException("This shipment is already cancelled.")
 
         if shipment.seller_id != seller.id:
             raise ClientNotAuthorized()
@@ -186,10 +177,7 @@ class ShipmentService(BaseService):
             raise EntityNotFound()
 
         if any(existing_tag.id == tag.id for existing_tag in shipment.tags):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Tag already exists on shipment.",
-            )
+            raise FastShipException("Tag already exists on shipment.")
 
         shipment.tags.append(tag)
 

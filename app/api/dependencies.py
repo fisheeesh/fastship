@@ -1,9 +1,10 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.exceptions import EntityNotFound, InvalidToken
 from ..core.security import oauth2_scheme_partner, oauth2_scheme_seller
 from ..database.models import DeliveryPartner, Seller
 from ..database.redis import is_jti_blacklisted
@@ -28,10 +29,7 @@ async def _verify_access_token(
 
     # * Validate the token
     if data is None or await is_jti_blacklisted(data["jti"]):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired access token.",
-        )
+        raise InvalidToken("Invalid or expired access token.")
 
     return data
 
@@ -57,17 +55,11 @@ async def get_current_seller(
 ):
     user = token_data.get("user")
     if not isinstance(user, dict) or "id" not in user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or access token payload.",
-        )
+        raise InvalidToken("Invalid or access token payload.")
 
     seller = await session.get(Seller, UUID(user["id"]))
     if seller is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Seller not found",
-        )
+        raise EntityNotFound("Seller not found")
 
     return seller
 
@@ -79,17 +71,11 @@ async def get_current_partner(
 ):
     user = token_data.get("user")
     if not isinstance(user, dict) or "id" not in user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or access token payload.",
-        )
+        raise InvalidToken("Invalid or access token payload.")
 
     partner = await session.get(DeliveryPartner, UUID(user["id"]))
     if partner is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Partner not found",
-        )
+        raise EntityNotFound("Partner not found")
 
     return partner
 

@@ -1,12 +1,18 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 
 from app.config import app_settings
+from app.core.exceptions import (
+    ClientNotAuthorized,
+    EntityNotFound,
+    InvalidToken,
+    NothingToUpdate,
+)
 
 from ...core.security import oauth2_scheme_seller
 from ...database.models import Seller
@@ -33,16 +39,10 @@ async def get_seller(
     seller = await service._get(id)
 
     if seller is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Seller not found.",
-        )
+        raise EntityNotFound("Seller not found.")
 
     if seller.id != current_seller.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not allowed to update this seller.",
-        )
+        raise ClientNotAuthorized("You are not allowed to update this seller.")
 
     return seller
 
@@ -95,24 +95,15 @@ async def auth_check(
     data = decode_acces_token(token)
 
     if data is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalide access token.",
-        )
+        raise InvalidToken("Invalide access token.")
 
     user = data.get("user")
     if not isinstance(user, dict) or "id" not in user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid access token payload.",
-        )
+        raise InvalidToken("Invalid access token payload.")
 
     seller = await session.get(Seller, user["id"])
     if seller is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Seller not found.",
-        )
+        raise EntityNotFound("Seller not found.")
 
     return seller
 
@@ -128,24 +119,15 @@ async def update_seller(
     seller = await service._get(id)
 
     if seller is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Seller not found.",
-        )
+        raise EntityNotFound("Seller not found.")
 
     if seller.id != current_seller.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not allowed to update this seller.",
-        )
+        raise ClientNotAuthorized("You are not allowed to update this seller.")
 
     update = seller_update.model_dump(exclude_none=True)
 
     if not update:
-        raise HTTPException(
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail="No data provided to update.",
-        )
+        raise NothingToUpdate("No data provided to update.")
 
     # if seller_update.name is not None:
     #     seller.name = seller_update.name

@@ -1,12 +1,13 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Form, HTTPException, Request, status
+from fastapi import APIRouter, Form, Request, status
 from fastapi.templating import Jinja2Templates
 
 from app.config import app_settings
 from app.utils import TEMPLATE_DIR
 from app.database.models import TagName
+from app.core.exceptions import EntityNotFound
 
 from ..dependencies import (
     CurrentPartnerDep,
@@ -161,9 +162,6 @@ async def get_shipments_with_tag(
     tag = await tag_name.tag(session)
 
     if tag is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tag does not exist.",
-        )
+        raise EntityNotFound("Tag does not exist.")
 
     return tag.shipments
