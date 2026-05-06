@@ -1,19 +1,18 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import BackgroundTasks, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from scalar_fastapi import get_scalar_api_reference
 
 from app.api.tag import APITag
-from app.worker.tasks import background_task, send_mail
 from app.core.exceptions import add_exception_handlers
-
-from .services.notification import NotificationService
+from app.worker.tasks import background_task, send_mail
 
 from .api.router import master_router
 from .database.session import create_db_tables
+from .services.notification import NotificationService
 
 
 @asynccontextmanager
@@ -120,4 +119,4 @@ def test():
 
 @app.get("/")
 def read_root():
-    return {"detail": "server is running..."}
+    return {"detail": "servier is running..."}
