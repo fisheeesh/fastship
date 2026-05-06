@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
+from app.api.tag import APITag
 from app.utils import TEMPLATE_DIR
 
 from app.config import app_settings
@@ -21,7 +22,7 @@ from ..schemas.delivery_partner import (
     DeliveryPartnerUPdate,
 )
 
-router = APIRouter(prefix="/partner", tags=["Delivery Partner"])
+router = APIRouter(prefix="/partner", tags=[APITag.PARTNER])
 
 
 ### Register a delivery partner

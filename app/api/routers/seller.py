@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 
+from app.api.tag import APITag
 from app.config import app_settings
 from app.core.exceptions import (
     ClientNotAuthorized,
@@ -26,7 +27,7 @@ from ..dependencies import (
 )
 from ..schemas.seller import SellerCreate, SellerRead, SellerUpdate
 
-router = APIRouter(prefix="/seller", tags=["Seller"])
+router = APIRouter(prefix="/seller", tags=[APITag.SELLER])
 
 
 ### Get a seller info

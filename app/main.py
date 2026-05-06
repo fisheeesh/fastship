@@ -6,6 +6,7 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi.responses import RedirectResponse
 from scalar_fastapi import get_scalar_api_reference
 
+from app.api.tag import APITag
 from app.worker.tasks import background_task, send_mail
 from app.core.exceptions import add_exception_handlers
 
@@ -21,9 +22,45 @@ async def lifespan_handler(app: FastAPI):
     yield
 
 
+description = """
+Delivery Management System for sellers and delivery agents.
+### Seller
+- Submit shipment efforlessly
+- Share tracking links with customers
+
+### Delivery Agent
+- Auto accept shipments
+- Track and update shipment status
+- Email and SMS notifications
+"""
 app = FastAPI(
     # * server start/stop listener
     lifespan=lifespan_handler,
+    title="FastShip",
+    description=description,
+    docs_url=None,
+    redoc_url=None,
+    version="0.1.0",
+    terms_of_service="https://fastship.com/terms",
+    contact={
+        "name": "FastShip Support",
+        "url": "https://fastship.com/support",
+        "email": "support@fastship.com",
+    },
+    openapi_tags=[
+        {
+            "name": APITag.SHIPMENT,
+            "description": "Operations related to shipments."
+        },
+        {
+            "name": APITag.SELLER,
+            "description": "Operations related to seller."
+        },
+        {
+            "name": APITag.PARTNER,
+            "description": "Operations related to delivery partner."
+        },
+    ],
 )
 
 app.add_middleware(
@@ -50,18 +87,7 @@ async def send_test_mail(tasks: BackgroundTasks):
     return {"detail": "Mail has been sent!"}
 
 
-@app.get("/", include_in_schema=False)
-def root():
-    return {
-        "success": True,
-        "message": "fastship api server is running",
-        "version": "1.0.0",
-        "author": "fisheeesh",
-        "timestamp": datetime.now(),
-    }
-
-
-@app.get("/scalar", include_in_schema=False)
+@app.get("/docs", include_in_schema=False)
 def get_scalar_docs():
     return get_scalar_api_reference(
         openapi_url=app.openapi_url,
