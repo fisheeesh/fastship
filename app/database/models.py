@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pydantic import EmailStr
-from sqlalchemy import ARRAY, INTEGER, Column, ForeignKey
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Field, Relationship, SQLModel, select
 
@@ -205,6 +205,19 @@ class Seller(User, table=True):
     )
 
 
+class ServicableLocation(SQLModel, table=True):
+    __tablename__ = "servicable_location"  # type: ignore
+
+    partner_id: UUID = Field(
+        foreign_key="delivery_partner.id",
+        primary_key=True,
+    )
+    location_id: int = Field(
+        foreign_key="location.zip_code",
+        primary_key=True,
+    )
+
+
 class DeliveryPartner(User, table=True):
     __tablename__ = "delivery_partner"  # type: ignore
 
@@ -221,8 +234,13 @@ class DeliveryPartner(User, table=True):
             default=datetime.now,
         )
     )
-    serviceable_zip_codes: list[int] = Field(
-        sa_column=Column(ARRAY(INTEGER)),
+    # servicable_zip_codes: list[int] = Field(
+    #     sa_column=Column(ARRAY(INTEGER)),
+    # )
+    servicable_locations: list["Location"] = Relationship(
+        back_populates="delivery_partners",
+        link_model=ServicableLocation,
+        sa_relationship_kwargs={"lazy": "selectin"},
     )
     max_handling_capacity: int
 
@@ -243,6 +261,23 @@ class DeliveryPartner(User, table=True):
     @property
     def free_handling_capacity(self):
         return self.max_handling_capacity - len(self.active_shipments)
+
+
+class Location(SQLModel, table=True):
+    __tablename__ = "location"  # type: ignore
+
+    zip_code: int = Field(primary_key=True)
+
+    # * Additional metadata fields
+    # * estimated_delivery_days: int = Field(default=3)
+    # * surcharge: float = Field(default=0.0)
+    # * active: bool = Field(default=True)
+
+    delivery_partners: list["DeliveryPartner"] = Relationship(
+        back_populates="servicable_locations",
+        link_model=ServicableLocation,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
 
 
 class Review(SQLModel, table=True):
