@@ -54,7 +54,6 @@ nodeenv==1.10.0
 orjson==3.11.8
 packaging==26.2
 parso==0.8.7
-passlib==1.7.4
 pathspec==1.1.1
 prompt_toolkit==3.0.52
 propcache==0.4.1
@@ -86,7 +85,6 @@ sqlmodel==0.0.34
 starlette==1.0.0
 twilio==9.10.5
 typer==0.25.1
-types-passlib==1.7.7.20260211
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzdata==2026.2

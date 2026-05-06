@@ -2,7 +2,7 @@ from datetime import timedelta
 from typing import Union
 from uuid import UUID
 
-from passlib.context import CryptContext
+import bcrypt
 from pydantic import EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +27,21 @@ from .base import BaseService
 from app.config import app_settings
 
 
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt(),
+    ).decode("utf-8")
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    try:
+        return bcrypt.checkpw(
+            password.encode("utf-8"),
+            password_hash.encode("utf-8"),
+        )
+    except (TypeError, ValueError):
+        return False
 
 
 class UserService(BaseService):
@@ -68,7 +82,7 @@ class UserService(BaseService):
 
         user = self.model(
             **user_data,
-            password_hash=password_context.hash(password),
+            password_hash=hash_password(password),
         )  # type: ignore
 
         # * Add the use to database and get refreshed data
@@ -98,7 +112,7 @@ class UserService(BaseService):
     async def _login(self, email, password) -> str:
         user = await self._get_by_email(email)
 
-        if user is None or not password_context.verify(
+        if user is None or not verify_password(
             password,
             user.password_hash,
         ):
@@ -154,7 +168,7 @@ class UserService(BaseService):
         if user is None:
             raise EntityNotFound("User not found.")
 
-        user.password_hash = password_context.hash(password)
+        user.password_hash = hash_password(password)
 
         await self._update(user)
 

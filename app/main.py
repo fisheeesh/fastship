@@ -48,17 +48,11 @@ app = FastAPI(
         "email": "support@fastship.com",
     },
     openapi_tags=[
-        {
-            "name": APITag.SHIPMENT,
-            "description": "Operations related to shipments."
-        },
-        {
-            "name": APITag.SELLER,
-            "description": "Operations related to seller."
-        },
+        {"name": APITag.SHIPMENT, "description": "Operations related to shipments."},
+        {"name": APITag.SELLER, "description": "Operations related to seller."},
         {
             "name": APITag.PARTNER,
-            "description": "Operations related to delivery partner."
+            "description": "Operations related to delivery partner.",
         },
     ],
 )
@@ -122,3 +116,8 @@ def test():
             "sec": now.second,
         },
     )
+
+
+@app.get("/")
+def read_root():
+    return {"detail": "server is running..."}
