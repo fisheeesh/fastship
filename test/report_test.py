@@ -4,7 +4,7 @@ import report
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def report_json():
     print("\n[ Fixture ]: requested...")
     report.generate_report()
@@ -15,11 +15,11 @@ def report_json():
 
 
 def test_report_json(report_json):
-    print("[ Test ]: recieved -", report_json)
+    print("\n[ Test ]: recieved -", report_json)
     assert type(report_json) == dict  # noqa: E721
 
 
 def test_report_fields(report_json):
-    print("[ Test ]: recieved -", report_json)
+    print("\n[ Test ]: recieved -", report_json)
     assert "timestamp" in report_json
     assert "status" in report_json
