@@ -47,10 +47,39 @@ async def seller_token(client: AsyncClient):
     return response.json()["access_token"]
 
 
+@pytest_asyncio.fixture(scope="session")
+async def partner_token(client: AsyncClient):
+    response = await client.post(
+        "/partner/login",
+        data={
+            "grant_type": "password",
+            "username": example.DELIVERY_PARTNER["email"],
+            "password": example.DELIVERY_PARTNER["password"],
+        },
+    )
+
+    assert "access_token" in response.json()
+    return response.json()["access_token"]
+
+
+@pytest_asyncio.fixture
+async def db_session():
+    async with test_session() as session:  # type: ignore
+        yield session
+
+
 @pytest.fixture(scope="session", autouse=True)
 async def setup_and_teardown():
     print("\nStarting tests...")
 
+    from app.api import dependencies as api_dependencies
+
+    original_is_jti_blacklisted = api_dependencies.is_jti_blacklisted
+
+    async def is_jti_blacklisted_override(jti: str) -> bool:
+        return False
+
+    api_dependencies.is_jti_blacklisted = is_jti_blacklisted_override
     app.dependency_overrides[get_session] = get_session_override
 
     async with engine.begin() as connection:
@@ -67,5 +96,6 @@ async def setup_and_teardown():
         await connection.run_sync(SQLModel.metadata.drop_all)
 
     app.dependency_overrides.clear()
+    api_dependencies.is_jti_blacklisted = original_is_jti_blacklisted
 
     print("\nFinished!!!")

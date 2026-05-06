@@ -21,7 +21,7 @@ DELIVERY_PARTNER = {
     "name": "PHL",
     "email": "phl@xmailg.one",
     "password": "tough",
-    "max_handling_capacity": 2,
+    "max_handling_capacity": 50,
     "servicable_zip_codes": [11001, 11002, 11003, 11004, 11005],
 }
 SHIPMENT = {
