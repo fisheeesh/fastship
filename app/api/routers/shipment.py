@@ -38,12 +38,47 @@ async def get_shipment(
 
 
 ### Create new shipment
-@router.post("/", response_model=ShipmentRead)
+@router.post(
+    "/",
+    response_model=ShipmentRead,
+    name="Create Shipment",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "description": "Shipment created.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": "dewr34-332324-h232hf-owie422",
+                        "status": "pending",
+                        "delivery_partner": {
+                            "id": 1,
+                            "name": "Flash",
+                        },
+                        "tracking_number": "213212131",
+                        "origin": {
+                            "adddress": "123 Main St, City, Country",
+                            "postal_code": "12345",
+                        },
+                        "destination": {
+                            "address": "456 Elm St, City, Country",
+                            "postal_code": "6789",
+                        },
+                    }
+                }
+            },
+        },
+        status.HTTP_406_NOT_ACCEPTABLE: {
+            "description": "Delivery partner not available."
+        },
+    },
+)
 async def create_shipment(
     seller: CurrentSellerDep,
     shipment_create: ShipmentCreate,
     service: ShipmentServiceDep,
 ):
+    """Create a new shipment"""
     return await service.add(shipment_create, seller)
 
 
@@ -82,7 +117,7 @@ async def cancel_shipment(
 
 
 ### Track details of a shipment
-@router.get("/track")
+@router.get("/track", include_in_schema=False)
 async def get_tracking(
     request: Request,
     id: UUID,
