@@ -24,3 +24,9 @@ venv*/
 guide.txt
 
 .vscode
+.hypothesis
+.pytest_cache
+dump.rdb
+.claude
+
+venv

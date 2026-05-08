@@ -28,7 +28,7 @@ async def _ensure_tag(session: AsyncSession, tag_name: TagName) -> None:
         Tag(
             name=tag_name,
             instruction=f"{tag_name.value.replace('_', ' ').title()} instructions.",
-        )
+        ) # type: ignore
     )
     await session.commit()
 
