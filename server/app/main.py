@@ -4,6 +4,7 @@ from datetime import datetime
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.routing import APIRoute
 from scalar_fastapi import get_scalar_api_reference
 
 from app.api.tag import APITag
@@ -13,6 +14,10 @@ from app.worker.tasks import background_task, send_mail
 from .api.router import master_router
 from .database.session import create_db_tables
 from .services.notification import NotificationService
+
+
+def custom_generate_unique_id_function(route: APIRoute) -> str:
+    return route.name
 
 
 @asynccontextmanager
@@ -54,6 +59,7 @@ app = FastAPI(
             "description": "Operations related to delivery partner.",
         },
     ],
+    generate_unique_id_function=custom_generate_unique_id_function,
 )
 
 app.add_middleware(
@@ -62,6 +68,8 @@ app.add_middleware(
         "http://localhost:5173",
     ],
     allow_methods=["*"],
+    allow_credentials=True,
+    allow_headers=["*"],
 )
 
 app.include_router(master_router)
@@ -80,6 +88,7 @@ async def send_test_mail(tasks: BackgroundTasks):
     return {"detail": "Mail has been sent!"}
 
 
+# * Scalar API Documentation
 @app.get("/docs", include_in_schema=False)
 def get_scalar_docs():
     return get_scalar_api_reference(

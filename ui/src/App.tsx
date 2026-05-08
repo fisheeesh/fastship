@@ -1,11 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
+import { Api, type ShipmentRead } from './api/client'
+
+const api = new Api({
+  baseURL: "http://localhost:8000",
+})
 
 function App() {
   const [count, setCount] = useState(0)
+  const [shipment, setShipment] = useState<ShipmentRead | null>(null)
+
+  const getShipment = async () => {
+    const res = await api.shipment.getShipment({ id: "1db4b9b4-a4cb-4f52-8eed-135aae024fa2" })
+
+    setShipment(res.data)
+    console.log(res.data)
+  }
+
+  useEffect(() => {
+    getShipment()
+  }, [])
 
   return (
     <>
@@ -16,7 +33,7 @@ function App() {
           <img src={viteLogo} className="vite" alt="Vite logo" />
         </div>
         <div>
-          <h1>Get started</h1>
+          <h1>Get started {shipment?.content}</h1>
           <p>
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
           </p>
