@@ -88,7 +88,7 @@ export default function AccountPage() {
                   type="button"
                   variant="destructive"
                   onClick={logout}
-                  className="w-min ml-auto min-h-11"
+                  className="w-min cursor-pointer ml-auto min-h-11"
                 >
                   Logout
                 </Button>

@@ -99,7 +99,7 @@ export default function ShipmentView({ shipment }: { shipment: ShipmentRead }) {
                     <Button onClick={() => {
                         navigate({
                             pathname: "/update-shipment",
-                            search: `?id=${shipment.id}`,
+                            search: `?id=${shipment.id}`
                         })
                     }}>
                         <Edit3 />

@@ -21,7 +21,15 @@ const menuItems = [
   {
     title: "Account",
     url: "/account"
-  }
+  },
+  // {
+  //   title: "Submit Shipment",
+  //   url: "/submit-shipment"
+  // },
+  // {
+  //   title: "Update Shipment",
+  //   url: "/update-shipment"
+  // },
 ]
 
 
@@ -73,7 +81,7 @@ export function AppSidebar({ currentRoute, ...props }: { currentRoute: string } 
             {
               user === 'partner' && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={currentRoute == 'submit-shipment'}>
+                  <SidebarMenuButton asChild isActive={currentRoute == 'update-shipment'}>
                     <Link to="/update-shipment">
                       Update Shipment
                     </Link>
