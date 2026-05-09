@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 
 
@@ -68,9 +68,11 @@ def _get_handler(status: int, detail: str):
 
         print(panel.Panel(f"Handled: {exception.__class__.__name__}"))
 
-        raise HTTPException(
+        return JSONResponse(
             status_code=status,
-            detail=detail,
+            content={
+                "detail": detail,
+            },
         )
 
     return handler
@@ -95,7 +97,4 @@ def add_exception_handlers(app: FastAPI):
                 "detail": "Something went wrong...",
             },
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            headers={
-                "X-Error": f"{exception}"
-            }
         )

@@ -1,9 +1,11 @@
 from typing import Union
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class BaseDeliveryPartner(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     email: EmailStr
     servicable_zip_codes: list[int]

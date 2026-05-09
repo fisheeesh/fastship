@@ -70,7 +70,7 @@ class Tag(SQLModel, table=True):
     shipments: list["Shipment"] = Relationship(
         back_populates="tags",
         link_model=ShipmentTag,
-        sa_relationship_kwargs={"lazy": "immediate"},
+        sa_relationship_kwargs={"lazy": "selectin"},
     )
 
 
@@ -130,7 +130,7 @@ class Shipment(SQLModel, table=True):
     tags: list["Tag"] = Relationship(
         back_populates="shipments",
         link_model=ShipmentTag,
-        sa_relationship_kwargs={"lazy": "immediate"},
+        sa_relationship_kwargs={"lazy": "selectin"},
     )
 
     @property
@@ -261,6 +261,10 @@ class DeliveryPartner(User, table=True):
     @property
     def free_handling_capacity(self):
         return self.max_handling_capacity - len(self.active_shipments)
+
+    @property
+    def servicable_zip_codes(self) -> list[int]:
+        return [location.zip_code for location in self.servicable_locations]
 
 
 class Location(SQLModel, table=True):

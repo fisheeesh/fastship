@@ -71,9 +71,7 @@ async def update_delivery_partner(
     update = partner_update.model_dump(exclude_none=True)
     if not update:
         raise NothingToUpdate("No data provided to update.")
-    return await service.update(
-        partner.sqlmodel_update(update),
-    )
+    return await service.update(partner, partner_update)
 
 
 ### Logout a delivery patner
