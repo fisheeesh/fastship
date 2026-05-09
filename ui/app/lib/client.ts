@@ -878,11 +878,13 @@ export class Api<
      * @name GetSellerProfile
      * @summary Get Seller Profile
      * @request GET:/seller/me
+     * @secure
      */
     getSellerProfile: (params: RequestParams = {}) =>
       this.request<SellerRead, any>({
         path: `/seller/me`,
         method: "GET",
+        secure: true,
         format: "json",
         ...params,
       }),
@@ -1232,6 +1234,24 @@ export class Api<
     getShipments: (params: RequestParams = {}) =>
       this.request<ShipmentRead[], any>({
         path: `/partner/shipments`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Delivery Partner
+     * @name GetPartnerProfile
+     * @summary Get Partner Profile
+     * @request GET:/partner/me
+     * @secure
+     */
+    getPartnerProfile: (params: RequestParams = {}) =>
+      this.request<DeliveryPartnerRead, any>({
+        path: `/partner/me`,
         method: "GET",
         secure: true,
         format: "json",

@@ -137,3 +137,9 @@ async def reset_password(
 @router.get("/shipments", response_model=list[ShipmentRead])
 async def get_shipments(partner: CurrentPartnerDep):
     return partner.shipments
+
+
+### Get partner profile
+@router.get("/me", response_model=DeliveryPartnerRead)
+async def get_partner_profile(partner: CurrentPartnerDep):
+    return partner

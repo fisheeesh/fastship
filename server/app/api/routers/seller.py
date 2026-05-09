@@ -71,7 +71,7 @@ async def login_seller(
 
 ### Get seller profile
 @router.get("/me", response_model=SellerRead)
-async def get_seller_profile(seller: SellerServiceDep):
+async def get_seller_profile(seller: CurrentSellerDep):
     return seller
 
 
