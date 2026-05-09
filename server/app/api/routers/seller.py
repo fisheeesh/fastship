@@ -15,7 +15,7 @@ from app.core.exceptions import (
     NothingToUpdate,
 )
 
-from ...core.security import oauth2_scheme_seller
+from ...core.security import TokenData, oauth2_scheme_seller
 from ...database.models import Seller
 from ...database.redis import add_jti_to_blacklist
 from ...utils import TEMPLATE_DIR, decode_acces_token
@@ -55,7 +55,7 @@ async def register_seller(seller: SellerCreate, service: SellerServiceDep):
 
 
 ### Login the seller
-@router.post("/login")
+@router.post("/login", response_model=TokenData)
 async def login_seller(
     request_form: Annotated[OAuth2PasswordRequestForm, Depends()],
     service: SellerServiceDep,
@@ -64,8 +64,14 @@ async def login_seller(
 
     return {
         "access_token": token,
-        "type": "jwt",
+        "token_type": "bearer",
     }
+
+
+### Get seller profile
+@router.get("/me", response_model=SellerRead)
+async def get_seller_profile(seller: SellerServiceDep):
+    return seller
 
 
 ### Verify Seller Email

@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 from app.api.tag import APITag
+from app.core.security import TokenData
 from app.utils import TEMPLATE_DIR
 
 from app.config import app_settings
@@ -45,7 +46,7 @@ async def verify_partner_email(
 
 
 ### Login a delivery partner
-@router.post("/login")
+@router.post("/login", response_model=TokenData)
 async def login_delivery_partner(
     request_form: Annotated[OAuth2PasswordRequestForm, Depends()],
     service: PartnerServiceDep,
@@ -54,7 +55,7 @@ async def login_delivery_partner(
 
     return {
         "access_token": token,
-        "type": "jwt",
+        "token_type": "bearer",
     }
 
 

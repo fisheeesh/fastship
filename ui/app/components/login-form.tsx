@@ -9,16 +9,37 @@ import {
   FieldSeparator,
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
+import { toast } from "sonner"
+import { useContext } from "react"
+import { AuthContext } from "~/contexts/auth-context"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+
+  const { login } = useContext(AuthContext)
+
+  const loginUser = async (data: FormData) => {
+    const email = data.get("email")
+    const password = data.get("password")
+
+    if (!email || !password) {
+      toast.warning("Warning", {
+        description: "Please provide email & password."
+      })
+      return
+    }
+
+    await login(email as string, password as string)
+  }
+
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form className="p-6 md:p-8" action={loginUser}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -29,6 +50,7 @@ export function LoginForm({
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
+                  name="email"
                   id="email"
                   type="email"
                   placeholder="m@example.com"
@@ -45,7 +67,7 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input name="password" id="password" type="password" required />
               </Field>
               <Field>
                 <Button type="submit">Login</Button>
