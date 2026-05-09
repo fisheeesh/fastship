@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
+from app.api.schemas.shipment import ShipmentRead
 from app.api.tag import APITag
 from app.core.security import TokenData
 from app.utils import TEMPLATE_DIR
@@ -130,3 +131,9 @@ async def reset_password(
         if is_success
         else "password/reset_failed.html",
     )
+
+
+## Get all shipments assigned to the delivery partner
+@router.get("/shipments", response_model=list[ShipmentRead])
+async def get_shipments(partner: CurrentPartnerDep):
+    return partner.shipments

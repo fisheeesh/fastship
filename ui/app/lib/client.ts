@@ -395,7 +395,7 @@ export class HttpClient<SecurityDataType = unknown> {
       headers: {
         ...((method &&
           this.instance.defaults.headers[
-          method.toLowerCase() as keyof HeadersDefaults
+            method.toLowerCase() as keyof HeadersDefaults
           ]) ||
           {}),
         ...(params1.headers || {}),
@@ -1020,6 +1020,24 @@ export class Api<
         format: "json",
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Seller
+     * @name GetShipments
+     * @summary Get Shipments
+     * @request GET:/seller/shipments
+     * @secure
+     */
+    getShipments: (params: RequestParams = {}) =>
+      this.request<ShipmentRead[], any>({
+        path: `/seller/shipments`,
+        method: "GET",
+        secure: true,
+        format: "json",
+        ...params,
+      }),
   };
   partner = {
     /**
@@ -1198,6 +1216,24 @@ export class Api<
         path: `/partner/reset-password`,
         method: "POST",
         query: query,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Delivery Partner
+     * @name GetShipments
+     * @summary Get Shipments
+     * @request GET:/partner/shipments
+     * @secure
+     */
+    getShipments: (params: RequestParams = {}) =>
+      this.request<ShipmentRead[], any>({
+        path: `/partner/shipments`,
+        method: "GET",
+        secure: true,
         format: "json",
         ...params,
       }),
