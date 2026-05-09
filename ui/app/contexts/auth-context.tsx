@@ -1,9 +1,10 @@
 import { createContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import api from "~/lib/api";
 
 interface AuthContextType {
-    token: string | null
+    token: string | null | undefined
     login: (email: string, password: string) => Promise<void>
     logout: () => void
 }
@@ -15,7 +16,8 @@ const AuthContext = createContext<AuthContextType>({
 })
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [token, setToken] = useState<string | null>(null)
+    const [token, setToken] = useState<string | null>()
+    const navigate = useNavigate()
 
     // ? check whether user is already login or not
     useEffect(() => {
@@ -24,6 +26,9 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
         if (token) {
             setToken(token)
             api.setSecurityData(token)
+        }
+        else {
+            setToken(null)
         }
     }, [])
 
@@ -43,6 +48,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
                 toast.success("Success", {
                     description: "Successfully logged in."
                 })
+                navigate("/dashboard")
             }
         } catch (error) {
             console.log(error)
@@ -63,7 +69,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <AuthContext.Provider value={{ token, login, logout }}>
-            {children}
+            {token === undefined ? <div>Loading...</div> : children}
         </AuthContext.Provider>
     )
 }

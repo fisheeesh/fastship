@@ -1,4 +1,5 @@
-import { cn } from "~/lib/utils"
+import { useContext } from "react"
+import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
 import {
@@ -9,9 +10,8 @@ import {
   FieldSeparator,
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { toast } from "sonner"
-import { useContext } from "react"
 import { AuthContext } from "~/contexts/auth-context"
+import { cn } from "~/lib/utils"
 
 export function LoginForm({
   className,
