@@ -6,11 +6,14 @@ services:
     environment:
       POSTGRES_SERVER: db
       POSTGRES_PORT: "5432"
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: strong
-      POSTGRES_DB: fastship
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       REDIS_HOST: redis
-      REDIS_PORT: "6379"
+      REDIS_PORT: ${REDIS_PORT}
+    expose:
+      - 8000
+    command: ["fastapi", "run", "--port", "8000"]
     ports:
       - "8000:8000"
     depends_on:
@@ -22,11 +25,11 @@ services:
   db:
     image: postgres:17
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: strong
-      POSTGRES_DB: fastship
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d fastship"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -40,3 +43,13 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  celery:
+    build: .
+    command: ["celery", "-A", "app.worker.tasks", "worker", "--loglevel=info"]
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+    depends_on:
+      redis:
+        condition: service_healthy
