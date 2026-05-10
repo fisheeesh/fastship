@@ -1,0 +1,8 @@
+venv
+
+migrations
+
+alembic.ini
+
+**/__pycache__
+**/.pytest_cache
