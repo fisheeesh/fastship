@@ -23,16 +23,14 @@ def upgrade() -> None:
         """
         DO $$
         BEGIN
-            IF NOT EXISTS (
+            IF EXISTS (
                 SELECT 1
                 FROM pg_type t
-                JOIN pg_enum e ON t.oid = e.enumtypid
                 JOIN pg_namespace n ON n.oid = t.typnamespace
                 WHERE t.typname = 'shipmentstatus'
                   AND n.nspname = 'public'
-                  AND e.enumlabel = 'cancelled'
             ) THEN
-                ALTER TYPE public.shipmentstatus ADD VALUE 'cancelled';
+                ALTER TYPE public.shipmentstatus ADD VALUE IF NOT EXISTS 'cancelled';
             END IF;
         END
         $$;
