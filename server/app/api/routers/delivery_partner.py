@@ -1,26 +1,30 @@
+from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
-from app.api.schemas.shipment import ShipmentRead
-from app.api.tag import APITag
-from app.core.security import TokenData
-from app.utils import TEMPLATE_DIR
+from sqlalchemy import select
 
+from app.api.tag import APITag
 from app.config import app_settings
 from app.core.exceptions import NothingToUpdate
+from app.core.security import TokenData
+from app.database.models import Shipment
+from app.utils import TEMPLATE_DIR
 
 from ...database.redis import add_jti_to_blacklist
 from ..dependencies import (
     CurrentPartnerDep,
     PartnerServiceDep,
+    SessionDep,
     verify_partner_access_token,
 )
 from ..schemas.delivery_partner import (
     DeliveryPartnerCreate,
     DeliveryPartnerRead,
+    DeliveryPartnerShipments,
     DeliveryPartnerUPdate,
 )
 
@@ -132,9 +136,27 @@ async def reset_password(
 
 
 ## Get all shipments assigned to the delivery partner
-@router.get("/shipments", response_model=list[ShipmentRead])
-async def get_shipments(partner: CurrentPartnerDep):
-    return partner.shipments
+@router.get("/shipments", response_model=DeliveryPartnerShipments)
+async def get_shipments(
+    partner: CurrentPartnerDep,
+    session: SessionDep,
+    page: int = 1,
+    pageSize: int = 10,
+):
+
+    result = await session.scalars(
+        select(Shipment)
+        .where(Shipment.delivery_partner_id == partner.id)  # type: ignore
+        .limit(pageSize)
+        .offset((page - 1) * pageSize)
+    )
+
+    return {
+        "shipments": result.all(),
+        "total_shipments": len(partner.shipments),
+        "page": page,
+        "total_pages": ceil(len(partner.shipments) / pageSize),
+    }
 
 
 ### Get partner profile
