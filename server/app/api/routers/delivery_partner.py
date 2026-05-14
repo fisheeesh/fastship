@@ -1,11 +1,12 @@
 from math import ceil
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
+from sqlmodel import asc, desc
 
 from app.api.tag import APITag
 from app.config import app_settings
@@ -29,6 +30,20 @@ from ..schemas.delivery_partner import (
 )
 
 router = APIRouter(prefix="/partner", tags=[APITag.PARTNER])
+
+
+class PaginationParams(BaseModel):
+    page: int = 1
+    pageSize: int = 10
+    order: Literal["asc", "desc"] = "asc"
+
+
+def get_pagination_params(
+    page: int = 1,
+    pageSize=10,
+    order: Literal["asc", "desc"] = "asc",
+):
+    return PaginationParams(page=page, pageSize=pageSize, order=order)
 
 
 ### Register a delivery partner
@@ -140,22 +155,26 @@ async def reset_password(
 async def get_shipments(
     partner: CurrentPartnerDep,
     session: SessionDep,
-    page: int = 1,
-    pageSize: int = 10,
+    pagination: Annotated[PaginationParams, Depends(get_pagination_params)],
 ):
 
     result = await session.scalars(
         select(Shipment)
         .where(Shipment.delivery_partner_id == partner.id)  # type: ignore
-        .limit(pageSize)
-        .offset((page - 1) * pageSize)
+        .limit(pagination.pageSize)
+        .offset((pagination.page - 1) * pagination.pageSize)
+        .order_by(
+            asc(Shipment.created_at)
+            if pagination.order == "asc"
+            else desc(Shipment.created_at)
+        )
     )
 
     return {
         "shipments": result.all(),
         "total_shipments": len(partner.shipments),
-        "page": page,
-        "total_pages": ceil(len(partner.shipments) / pageSize),
+        "page": pagination.page,
+        "total_pages": ceil(len(partner.shipments) / pagination.pageSize),
     }
 
 
