@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import BackgroundTasks, FastAPI
+from fastapi import BackgroundTasks, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
@@ -14,6 +14,7 @@ from app.worker.tasks import background_task, send_mail
 from .api.router import master_router
 from .database.session import create_db_tables
 from .services.notification import NotificationService
+from app.core.logging import logger
 
 
 def custom_generate_unique_id_function(route: APIRoute) -> str:
@@ -61,6 +62,20 @@ app = FastAPI(
     ],
     generate_unique_id_function=custom_generate_unique_id_function,
 )
+
+
+### Custom logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    response: Response = await call_next(request)
+    logger.info(
+        "%s %s (%d)",
+        request.method,
+        request.url.path,
+        response.status_code,
+    )
+    return response
+
 
 app.add_middleware(
     CORSMiddleware,
